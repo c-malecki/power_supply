@@ -25,3 +25,5 @@ objects.list
 *.swp
 .DS_Store
 Thumbs.db
+
+blog

@@ -12,6 +12,32 @@ Vout = 1.23 * (1 + (R2 / (R1 * R3))) where R1 = fixed resistor, R2 = potentiomet
 
 1.23 * (1 + (330 / (1800 * 1000))) = 
 
+https://electronics.stackexchange.com/questions/276989/dac-controlled-buck-regulator
+
+$I Rg = Vref / Rg$
+
+$Vref = 1.23V$
+
+$Rg = 330Ω$
+https://electronics.stackexchange.com/questions/276989/dac-controlled-buck-regulator
+$1.23 / 0.330 = Vref = 3.72mA$
+
+$I Rdac = (Vref - Vdac) / Rdac$
+
+$(1.23-0) / 1 = 1.23mA$
+
+$I Rf = I Rg + I Rdac$
+
+$3.72 + 1.23 = 4.93mA$
+
+$Vout = Vref + I Rf * Rf$
+
+$Rf = 1.374mA
+
+1.23 + (4.93 * 1.374) = 8.00382V base line at 0 control volts
+
+2.679 vattery pack voltage test
+
 ________________________
 
 stuff laid out by Cluade - need to double check everything/continue researching
