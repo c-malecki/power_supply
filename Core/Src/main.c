@@ -18,8 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "tim.h"
+#include "i2c.h"
 #include "gpio.h"
+#include "stm32f4xx_hal.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -33,19 +35,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-// should change to bit mask
-// typedef struct {
-//   uint16_t pin;
-//   uint8_t state;
-//   uint32_t last_interrupt_time
-// } LED_State_t;
-
-// typedef struct {
-//   LED_State_t red;
-//   LED_State_t green;
-//   LED_State_t blue;
-//   LED_State_t yellow;
-// } LED_States_t;
+#define OLED_ADDR 0x3C
+#define MCP_ADDR 0x60
+#define INA_ADDR 0x40
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,9 +48,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-// LED_States_t * LED_States = {0};
-uint32_t last_interrupt_time[4] = { 0 };
-#define DEBOUNCE_DELAY 200
+
+// uint32_t last_interrupt_time[4] = { 0 };
+// #define DEBOUNCE_DELAY 200
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,144 +63,180 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// void LED_State_Init(void) {
-//    LED_States->red.pin = LED_RED_Pin;
-//   LED_States->red.state = 0;
-
-//      LED_States->green.pin = LED_GREEN_Pin;
-//   LED_States->green.state = 0;
-
-//      LED_States->blue.pin = LED_BLUE_Pin;
-//   LED_States->blue.state = 0;
-
-//      LED_States->yellow.pin = LED_YELLOW_Pin;
-//   LED_States->yellow.state = 0;
-// }
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void Setup_I2C(void)
 {
-    uint16_t led_pin;
-    GPIO_TypeDef *btn_port;
+    HAL_Delay(100);
 
-    if (GPIO_Pin == BTN_RED_Pin) {
-        led_pin = LED_RED_Pin;
-        btn_port = GPIOB;
-    } else if (GPIO_Pin == BTN_GREEN_Pin) {
-        led_pin = LED_GREEN_Pin;
-        btn_port = GPIOB;
-    } else if (GPIO_Pin == BTN_BLUE_Pin) {
-        led_pin = LED_BLUE_Pin;
-        btn_port = GPIOB;
-    } else if (GPIO_Pin == BTN_YELLOW_Pin) {
-        led_pin = LED_YELLOW_Pin;
-        btn_port = GPIOB;
-    } else {
-        return;
-    }
+    uint8_t oled_cmd = 0xAE;
+    HAL_I2C_Mem_Write(&hi2c1, OLED_ADDR << 1, 0x00, 1, &oled_cmd, 1, 100);
 
-    GPIO_PinState btn_state = HAL_GPIO_ReadPin(btn_port, GPIO_Pin);
+    uint8_t config[2];
+    HAL_I2C_Mem_Read(&hi2c1, INA_ADDR << 1, 0x00, 1, config, 2, 100);
+}
 
-    if (btn_state == GPIO_PIN_RESET) {
-        HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_SET);
-    } else {
-        HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_RESET);
+void sweep_dac(void)
+{
+    /* Values were with ST-Link connected which reduces V slightly */
+
+    /*
+        ΔV = 1.38 - 1068 = -9.3V
+        Δ DAC = 4095 - 511 = 3584 steps
+
+        Slope = -9.3 / 3584 = -0.002595 V/step (actual 0.0025948661)
+    */
+
+    /*
+    *** 0 = ~12.00V
+        511 = ~10.68
+        1023 = ~9.29
+    *** 1133 = ~9.05V
+        1534 = ~7.91
+        2047 = ~6.52
+        2559 = ~5.14
+        3071 = ~3.75
+    *** 3236 = ~3.333
+        3583 = ~2.36
+        4095 = ~1.38
+
+        +/-100 to DAC = +/-0.2595V
+    */
+    uint16_t range[9] = { 0, 1133, 2575, 3236 };
+
+    for (int i = 0; i < 4; i++) {
+        uint16_t dac_value = range[i];
+        uint8_t dac_data[2] = { (dac_value >> 8) & 0x0F, dac_value & 0xFF };
+        HAL_I2C_Master_Transmit(&hi2c1, MCP_ADDR << 1, dac_data, 2, 100);
+        HAL_Delay(3000);
     }
 }
+
+// void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+// {
+//     uint16_t led_pin;
+//     GPIO_TypeDef *btn_port;
+
+//     if (GPIO_Pin == BTN_RED_Pin) {
+//         led_pin = LED_RED_Pin;
+//         btn_port = GPIOB;
+//     } else if (GPIO_Pin == BTN_GREEN_Pin) {
+//         led_pin = LED_GREEN_Pin;
+//         btn_port = GPIOB;
+//     } else if (GPIO_Pin == BTN_BLUE_Pin) {
+//         led_pin = LED_BLUE_Pin;
+//         btn_port = GPIOB;
+//     } else if (GPIO_Pin == BTN_YELLOW_Pin) {
+//         led_pin = LED_YELLOW_Pin;
+//         btn_port = GPIOB;
+//     } else {
+//         return;
+//     }
+
+//     GPIO_PinState btn_state = HAL_GPIO_ReadPin(btn_port, GPIO_Pin);
+
+//     if (btn_state == GPIO_PIN_RESET) {
+//         HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_SET);
+//     } else {
+//         HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_RESET);
+//     }
+// }
+
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+    /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* USER CODE BEGIN Init */
-    // LED_State_Init();
-  /* USER CODE END Init */
+    /* USER CODE BEGIN Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* USER CODE END Init */
 
-  /* USER CODE BEGIN SysInit */
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* USER CODE END SysInit */
+    /* USER CODE BEGIN SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_TIM1_Init();
-  /* USER CODE BEGIN 2 */
+    /* USER CODE END SysInit */
 
-    // LED_States.red = 0;
-    // LED_States.green = 0;
-    // LED_States.blue = 0;
-    // LED_States.yellow = 0;
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_I2C1_Init();
+    /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+    uint16_t dac_value = 0;
+    uint8_t dac_data[2] = { (dac_value >> 8) & 0x0F, dac_value & 0xFF };
+    HAL_I2C_Master_Transmit(&hi2c1, MCP_ADDR << 1, dac_data, 2, 100);
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+    HAL_Delay(200);
+
+    Setup_I2C();
+
+    /* USER CODE END 2 */
+
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
     while (1) {
-    /* USER CODE END WHILE */
+        /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+        /* USER CODE BEGIN 3 */
+
+        sweep_dac();
     }
-  /* USER CODE END 3 */
+    /* USER CODE END 3 */
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+    /** Configure the main internal regulator output voltage
+     */
+    __HAL_RCC_PWR_CLK_ENABLE();
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 96;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
+     */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLM = 12;
+    RCC_OscInitStruct.PLL.PLLN = 96;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    RCC_OscInitStruct.PLL.PLLQ = 4;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        Error_Handler();
+    }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    /** Initializes the CPU, AHB and APB buses clocks
+     */
+    RCC_ClkInitStruct.ClockType =
+        RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK) {
+        Error_Handler();
+    }
 }
 
 /* USER CODE BEGIN 4 */
@@ -215,30 +244,30 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
+    /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
     while (1) { }
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
+    /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+    /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
