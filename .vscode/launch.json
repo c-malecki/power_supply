@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Corex Debug (OpenOCD & RTT)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "executable": "build/Debug/power_supply.elf",
+      "device": "STM32F411CE",
+      "preLaunchTask": "Build firmware",
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32f4x.cfg"
+      ],
+      "rttConfig": {
+        "enabled": true,
+        "address": "auto",
+        "decoders": [
+          {
+            "label": "RTT Terminal",
+            "port": 0,
+            "type": "console"
+          }
+        ]
+      },
+    }
+  ]
+}
