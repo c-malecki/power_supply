@@ -20,6 +20,6 @@ typedef struct
 } MCP_Result_t;
 
 MCP_Result_t MCP_WriteValue(I2C_HandleTypeDef *handle, uint16_t value);
-uint16_t MCP_VoltageToValue(double voltage);
+uint16_t MCP_VoltageToValue(float voltage);
 
 #endif
