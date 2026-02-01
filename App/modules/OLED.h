@@ -1,0 +1,10 @@
+#ifndef __OLED_H__
+#define __OLED_H__
+
+#include "stm32f4xx_hal.h"
+
+#define OLED_I2C_ADDR 0x3C << 1
+
+HAL_StatusTypeDef OLED_Write_Cmd(I2C_HandleTypeDef *handle);
+
+#endif
