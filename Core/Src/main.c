@@ -28,27 +28,20 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SEGGER_RTT.h"
+#include "error.h"
+#include "INA219.h"
+#include "MCP4725.h"
+#include "OLED.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct
-{
-    HAL_StatusTypeDef err;
-    uint8_t retval[2];
-} I2C_Ret_t;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define OLED_ADDR 0x3C
-#define MCP_ADDR 0x60
-#define INA_ADDR 0x40
 
-#define DAC_VAL_3V3 3236
-#define DAC_VAL_5V 2560
-#define DAC_VAL_9V 1133
-#define DAC_VAL_12V 0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -78,78 +71,6 @@ int _write(int file, char *ptr, int len)
 {
     SEGGER_RTT_Write(0, ptr, len);
     return len;
-}
-
-// static void I2C_Handle_Err(HAL_StatusTypeDef err) { }
-
-static I2C_Ret_t Check_I2C_Ret(I2C_Ret_t ret)
-{
-    // HAL_OK 0x00U
-    // HAL_ERROR 0x01U
-    // HAL_BUSY 0x02U
-    // HAL_TIMEOUT 0x03U
-
-    if (ret.err != HAL_OK) {
-        printf("I2C Error: 0x%02X\r\n", ret.err);
-
-        switch (ret.err) {
-        case HAL_ERROR:
-            printf("HAL_ERROR\r\nresetting...\r\n");
-            break;
-        case HAL_BUSY:
-            printf("HAL_BUSY\r\nresetting...\r\n");
-            break;
-        case HAL_TIMEOUT:
-            printf("HAL_TIMEOUT\r\nresetting...\r\n");
-            break;
-        default:
-            printf("Unknown error\r\nresetting...\r\n");
-            break;
-        }
-        HAL_NVIC_SystemReset();
-    }
-
-    return ret;
-}
-
-static I2C_Ret_t DAC_Set_Val(uint16_t value)
-{
-    I2C_Ret_t ret;
-
-    if (value < DAC_VAL_12V)
-        value = DAC_VAL_12V;
-
-    if (value > DAC_VAL_3V3)
-        value = DAC_VAL_3V3;
-
-    ret.retval[0] = (value >> 8) & 0x0F;
-    ret.retval[1] = value & 0xFF;
-
-    ret.err = HAL_I2C_Master_Transmit(&hi2c1, MCP_ADDR << 1, ret.retval, 2, 100);
-
-    return Check_I2C_Ret(ret);
-}
-
-I2C_Ret_t INA_Read(void)
-{
-    I2C_Ret_t ret;
-
-    ret.err = HAL_I2C_Mem_Read(&hi2c1, INA_ADDR << 1, 0x00, 1, ret.retval, 2, 100);
-
-    return Check_I2C_Ret(ret);
-}
-
-HAL_StatusTypeDef OLED_Write_Cmd(void)
-{
-    uint8_t pData = 0xAE;
-
-    HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hi2c1, OLED_ADDR << 1, 0x00, 1, &pData, 1, 100);
-
-    if (status != HAL_OK) {
-        return status;
-    }
-
-    return status;
 }
 
 // void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -190,44 +111,38 @@ HAL_StatusTypeDef OLED_Write_Cmd(void)
  *
  *         Slope = -9.3 / 3584 = -0.002595 V/step (actual 0.0025948661)
  *
+ *    *** 0 = ~12.00V
+ *       511 = ~10.68
+ *       1023 = ~9.29
+ *   *** 1133 = ~9.05V
+ *       1534 = ~7.91
+ *       2047 = ~6.52
+ *       2559 = ~5.14
+ *       3071 = ~3.75
+ *   *** 3236 = ~3.333
+ *       3583 = ~2.36
+ *       4095 = ~1.38
+ *
+ *        +/-100 to DAC = +/-0.2595V
+ *
  * @retval HAL status
  */
 static void DAC_Sweep_Range(void)
 {
-    /* Values were with ST-Link connected which reduces V slightly */
-
-    /*
-        ΔV = 1.38 - 1068 = -9.3V
-        Δ DAC = 4095 - 511 = 3584 steps
-
-        Slope = -9.3 / 3584 = -0.002595 V/step (actual 0.0025948661)
-    */
-
-    /*
-    *** 0 = ~12.00V
-        511 = ~10.68
-        1023 = ~9.29
-    *** 1133 = ~9.05V
-        1534 = ~7.91
-        2047 = ~6.52
-        2559 = ~5.14
-        3071 = ~3.75
-    *** 3236 = ~3.333
-        3583 = ~2.36
-        4095 = ~1.38
-
-        +/-100 to DAC = +/-0.2595V
-    */
-
     uint16_t range[4] = { DAC_VAL_12V, DAC_VAL_9V, DAC_VAL_5V, DAC_VAL_3V3 };
 
     for (int i = 0; i < 4; i++) {
-        I2C_Ret_t ret = DAC_Set_Val(range[i]);
-        Check_I2C_Ret(ret);
+        HAL_StatusTypeDef err = MCP_Write_Value(&hi2c1, range[i]);
+        if (err != HAL_OK) {
+            printf("DAC_Sweep_Range: Error: %d\r\n", err);
+            return;
+        }
 
-        ret = INA_Read();
-        Check_I2C_Ret(ret);
-        printf("INA Data: 0x%02X%02X\r\n", ret.retval[0], ret.retval[1]);
+        double current = INA_Read_Current(&hi2c1);
+        double voltage = INA_Read_Voltage(&hi2c1);
+        double power = voltage * current;
+
+        printf("V: %.2fV | I: %.2fmA | P: %.2fmW\n", voltage, current, power);
 
         HAL_Delay(3000);
     }
@@ -259,8 +174,9 @@ int main(void)
     SystemClock_Config();
 
     /* USER CODE BEGIN SysInit */
-    SEGGER_RTT_Init();
-    printf("RTT Started\n");
+
+    // SEGGER_RTT_Init();
+
     /* USER CODE END SysInit */
 
     /* Initialize all configured peripherals */
@@ -269,12 +185,20 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
     HAL_Delay(100);
-    DAC_Set_Val(DAC_VAL_12V);
+
+    HAL_StatusTypeDef err = INA_Init(&hi2c1);
+    if (err != HAL_OK) {
+        printf("INA_Init: Error: %d\r\n", err);
+    }
+
+    err = MCP_Write_Value(&hi2c1, DAC_VAL_12V);
+    if (err != HAL_OK) {
+        printf("MCP_Write_Value: Error: %d\r\n", err);
+    }
+
     HAL_Delay(200);
 
-    OLED_Write_Cmd();
-
-    INA_Read();
+    OLED_Write_Cmd(&hi2c1);
 
     /* USER CODE END 2 */
 
@@ -284,7 +208,6 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        printf("Test message\r\n");
         DAC_Sweep_Range();
     }
     /* USER CODE END 3 */
