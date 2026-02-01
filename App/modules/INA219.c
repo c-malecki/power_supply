@@ -9,31 +9,33 @@ HAL_StatusTypeDef INA_Init(I2C_HandleTypeDef *handle)
 // based on equations in ./docs/components/INA219.pdf
 // shunt resistor = 0.1Ω
 // expected max current = 0.4A
-double INA_Read_Current(I2C_HandleTypeDef *handle)
+INA_Result_t INA_ReadCurrent(I2C_HandleTypeDef *handle)
 {
+    INA_Result_t result;
     uint8_t pData[2];
 
-    HAL_StatusTypeDef err = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, INA_CURR, 1, pData, 2, 100);
-    if (err != HAL_OK) {
-        return 0.0;
-    }
+    result.status = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, INA_CURR, 1, pData, 2, 100);
+    if (result.status != HAL_OK)
+        return result;
 
-    int16_t raw_current = (int16_t)((pData[0] << 8) | pData[1]);
+    int16_t raw = (int16_t)((pData[0] << 8) | pData[1]);
+    result.value = (double)(raw * 0.02);
 
-    return (double)(raw_current * 0.02);
+    return result;
 }
 
-double INA_Read_Voltage(I2C_HandleTypeDef *handle)
+INA_Result_t INA_ReadVoltage(I2C_HandleTypeDef *handle)
 {
+    INA_Result_t result;
     uint8_t pData[2];
 
-    HAL_StatusTypeDef err = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, 0x02, 1, pData, 2, 100);
+    result.status = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, 0x02, 1, pData, 2, 100);
 
-    if (err != HAL_OK)
-        return 0.0f;
+    if (result.status != HAL_OK)
+        return result;
 
-    uint16_t ret = ((pData[0] << 8) | pData[1]);
+    uint16_t raw = ((pData[0] << 8) | pData[1]);
+    result.value = (raw >> 3) * 0.004f;
 
-    return (ret >> 3) * 0.004f;
-    ;
+    return result;
 }

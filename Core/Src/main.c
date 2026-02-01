@@ -29,9 +29,11 @@
 /* USER CODE BEGIN Includes */
 #include "SEGGER_RTT.h"
 #include "error.h"
+#include "power.h"
 #include "INA219.h"
 #include "MCP4725.h"
 #include "OLED.h"
+#include "stm32f4xx_hal_gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,7 +54,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+Power_Controller_t pwr_ctrl;
 // uint32_t last_interrupt_time[4] = { 0 };
 // #define DEBOUNCE_DELAY 200
 
@@ -103,51 +105,6 @@ int _write(int file, char *ptr, int len)
 //     }
 // }
 
-/**
- * @brief  Values were with ST-Link connected which reduces V slightly
- *
- *         ΔV = 1.38 - 1068 = -9.3V
- *         ΔDAC = 4095 - 511 = 3584 steps
- *
- *         Slope = -9.3 / 3584 = -0.002595 V/step (actual 0.0025948661)
- *
- *    *** 0 = ~12.00V
- *       511 = ~10.68
- *       1023 = ~9.29
- *   *** 1133 = ~9.05V
- *       1534 = ~7.91
- *       2047 = ~6.52
- *       2559 = ~5.14
- *       3071 = ~3.75
- *   *** 3236 = ~3.333
- *       3583 = ~2.36
- *       4095 = ~1.38
- *
- *        +/-100 to DAC = +/-0.2595V
- *
- * @retval HAL status
- */
-static void DAC_Sweep_Range(void)
-{
-    uint16_t range[4] = { DAC_VAL_12V, DAC_VAL_9V, DAC_VAL_5V, DAC_VAL_3V3 };
-
-    for (int i = 0; i < 4; i++) {
-        HAL_StatusTypeDef err = MCP_Write_Value(&hi2c1, range[i]);
-        if (err != HAL_OK) {
-            printf("DAC_Sweep_Range: Error: %d\r\n", err);
-            return;
-        }
-
-        double current = INA_Read_Current(&hi2c1);
-        double voltage = INA_Read_Voltage(&hi2c1);
-        double power = voltage * current;
-
-        printf("V: %.2fV | I: %.2fmA | P: %.2fmW\n", voltage, current, power);
-
-        HAL_Delay(3000);
-    }
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -184,21 +141,12 @@ int main(void)
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
 
-    HAL_Delay(100);
-
-    HAL_StatusTypeDef err = INA_Init(&hi2c1);
-    if (err != HAL_OK) {
-        printf("INA_Init: Error: %d\r\n", err);
+    Power_Status_t pwr_status = Power_Init(&pwr_ctrl, &hi2c1, GPIOA, GPIO_PIN_11);
+    if (pwr_status != PWR_OK) {
+        // TODO: error handling
     }
 
-    err = MCP_Write_Value(&hi2c1, DAC_VAL_12V);
-    if (err != HAL_OK) {
-        printf("MCP_Write_Value: Error: %d\r\n", err);
-    }
-
-    HAL_Delay(200);
-
-    OLED_Write_Cmd(&hi2c1);
+    Check_I2C_Err(OLED_WriteCmd(&hi2c1));
 
     /* USER CODE END 2 */
 
@@ -208,7 +156,7 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        DAC_Sweep_Range();
+        // Power_SweepRange();
     }
     /* USER CODE END 3 */
 }
