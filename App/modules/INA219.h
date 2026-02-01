@@ -12,7 +12,7 @@
 typedef struct
 {
     HAL_StatusTypeDef status;
-    double value;
+    float value;
 } INA_Result_t;
 
 HAL_StatusTypeDef INA_Init(I2C_HandleTypeDef *handle);

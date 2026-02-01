@@ -29,10 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "SEGGER_RTT.h"
 #include "error.h"
-#include "power.h"
-#include "INA219.h"
-#include "MCP4725.h"
-#include "OLED.h"
+#include "pwr_ctrl.h"
 #include "stm32f4xx_hal_gpio.h"
 /* USER CODE END Includes */
 
@@ -141,12 +138,11 @@ int main(void)
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
 
+    // TODO: set pins for mosfets
     Power_Status_t pwr_status = Power_Init(&pwr_ctrl, &hi2c1, GPIOA, GPIO_PIN_11);
     if (pwr_status != PWR_OK) {
         // TODO: error handling
     }
-
-    Check_I2C_Err(OLED_WriteCmd(&hi2c1));
 
     /* USER CODE END 2 */
 

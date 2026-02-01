@@ -1,9 +1,9 @@
-#include "power.h"
+#include "pwr_ctrl.h"
 #include "MCP4725.h"
 #include "INA219.h"
 #include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_def.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 Power_Status_t Power_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *handle,
                           GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin)
@@ -13,7 +13,7 @@ Power_Status_t Power_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *handle,
     ctrl->i2c_handle = handle;
     ctrl->mosfet_port = mosfet_port;
     ctrl->mosfet_pin = mosfet_pin;
-    ctrl->output_enabled = 0;
+    ctrl->output_enabled = false;
 
     err = INA_Init(handle);
     if (err != HAL_OK) {
@@ -63,7 +63,7 @@ Power_Status_t Power_Update(Power_Controller_t *ctrl)
     ctrl->cur_current = current.value;
 
     if (current.value > 3.0) {
-        Power_Enable(ctrl, 0);
+        Power_Enable(ctrl, false);
         return PWR_ERROR_OVERCURRENT;
     }
 
@@ -99,17 +99,17 @@ void Power_SweepRange(Power_Controller_t *ctrl)
     uint16_t range[4] = { MCP_VAL_12V, MCP_VAL_9V, MCP_VAL_5V, MCP_VAL_3V3 };
 
     for (int i = 0; i < 4; i++) {
-        HAL_StatusTypeDef err = MCP_WriteValue(ctrl->i2c_handle, range[i]);
-        if (err != HAL_OK) {
-            printf("Power_SweepRange: Error: %d\r\n", err);
+        MCP_Result_t mcp_result = MCP_WriteValue(ctrl->i2c_handle, range[i]);
+        if (mcp_result.status != HAL_OK) {
+            printf("Power_SweepRange: Error: %d\r\n", mcp_result.status);
             return;
         }
 
-        double current = INA_ReadCurrent(ctrl->i2c_handle);
-        double voltage = INA_ReadVoltage(ctrl->i2c_handle);
-        double power = voltage * current;
+        INA_Result_t current = INA_ReadCurrent(ctrl->i2c_handle);
+        INA_Result_t voltage = INA_ReadVoltage(ctrl->i2c_handle);
+        float power = voltage.value * current.value;
 
-        printf("V: %.2fV | I: %.2fmA | P: %.2fmW\n", voltage, current, power);
+        printf("V: %.4fV | I: %.4fmA | P: %.4fmW\n", voltage.value, current.value, power);
 
         HAL_Delay(3000);
     }

@@ -25,7 +25,7 @@ MCP_Result_t MCP_WriteValue(I2C_HandleTypeDef *handle, uint16_t value)
     return result;
 }
 
-uint16_t MCP_VoltageToValue(double voltage)
+uint16_t MCP_VoltageToValue(float voltage)
 {
     uint16_t result;
 

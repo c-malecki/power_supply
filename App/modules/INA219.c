@@ -19,7 +19,7 @@ INA_Result_t INA_ReadCurrent(I2C_HandleTypeDef *handle)
         return result;
 
     int16_t raw = (int16_t)((pData[0] << 8) | pData[1]);
-    result.value = (double)(raw * 0.02);
+    result.value = (float)(raw * 0.02);
 
     return result;
 }
