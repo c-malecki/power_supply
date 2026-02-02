@@ -1,8 +1,10 @@
 #include "MCP4725.h"
 #include "stm32f4xx_hal_def.h"
 #include "float.h"
+#include "stdint.h"
+#include <stdint.h>
 
-MCP_Result_t MCP_WriteValue(I2C_HandleTypeDef *handle, uint16_t value)
+MCP_Result_t MCP_WriteSteps(I2C_HandleTypeDef *handle, uint16_t value)
 {
     MCP_Result_t result;
     result.value = value;
@@ -25,12 +27,7 @@ MCP_Result_t MCP_WriteValue(I2C_HandleTypeDef *handle, uint16_t value)
     return result;
 }
 
-uint16_t MCP_VoltageToValue(float voltage)
+uint16_t MCP_VoltageToSteps(float voltage)
 {
-    uint16_t result;
-
-    uint16_t val = Float_To_UInt16(voltage);
-    // TODO: converstion math and calibration
-    result = (voltage / MCP_Step) - 4095;
-    return result;
+    return (uint16_t)Float_To_UInt16((12 - voltage) / MCP_Step);
 }
