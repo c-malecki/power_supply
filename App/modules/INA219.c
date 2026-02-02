@@ -8,7 +8,7 @@ HAL_StatusTypeDef INA_Init(I2C_HandleTypeDef *handle)
 
 // based on equations in ./docs/components/INA219.pdf
 // shunt resistor = 0.1Ω
-// expected max current = 0.4A
+// placeholder: estimated max current = 0.4A
 INA_Result_t INA_ReadCurrent(I2C_HandleTypeDef *handle)
 {
     INA_Result_t result;
@@ -19,7 +19,7 @@ INA_Result_t INA_ReadCurrent(I2C_HandleTypeDef *handle)
         return result;
 
     int16_t raw = (int16_t)((pData[0] << 8) | pData[1]);
-    result.value = (float)(raw * 0.02);
+    result.value = (float)(raw * 0.02); // mA
 
     return result;
 }
@@ -29,7 +29,7 @@ INA_Result_t INA_ReadVoltage(I2C_HandleTypeDef *handle)
     INA_Result_t result;
     uint8_t pData[2];
 
-    result.status = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, 0x02, 1, pData, 2, 100);
+    result.status = HAL_I2C_Mem_Read(handle, INA_I2C_ADDR, INA_VOLTR, 1, pData, 2, 100);
 
     if (result.status != HAL_OK)
         return result;

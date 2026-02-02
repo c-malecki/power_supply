@@ -1,4 +1,4 @@
-#include "OLED.h"
+#include "GME12864-13.h"
 
 HAL_StatusTypeDef OLED_WriteCmd(I2C_HandleTypeDef *handle)
 {

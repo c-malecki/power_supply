@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "MCP4725.h"
 #include "i2c.h"
 #include "gpio.h"
 #include "stm32f4xx_hal.h"
@@ -51,9 +52,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
 Power_Controller_t pwr_ctrl;
-// uint32_t last_interrupt_time[4] = { 0 };
-// #define DEBOUNCE_DELAY 200
 
 /* USER CODE END PV */
 
@@ -138,21 +138,42 @@ int main(void)
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
 
+    HAL_Delay(100);
+
     // TODO: set pins for mosfets
     Power_Status_t pwr_status = Power_Init(&pwr_ctrl, &hi2c1, GPIOA, GPIO_PIN_11);
     if (pwr_status != PWR_OK) {
         // TODO: error handling
     }
 
+    HAL_Delay(100);
+
+    uint16_t res;
+
+    res = MCP_VoltageToSteps(3.3);
+    printf("VoltageToSteps: 3V3 = %d steps\r\n", res);
+
+    res = MCP_VoltageToSteps(5.0);
+    printf("VoltageToSteps: 5V = %d steps\r\n", res);
+
+    res = MCP_VoltageToSteps(9.0);
+    printf("VoltageToSteps: 9V = %d steps\r\n", res);
+
+    res = MCP_VoltageToSteps(12.0);
+    printf("VoltageToSteps: 12V = %d steps\r\n\n", res);
+
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+    uint8_t count = 1;
     while (1) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        // Power_SweepRange();
+        if (count < 4) {
+            Power_SweepRange(&pwr_ctrl, &count);
+        }
     }
     /* USER CODE END 3 */
 }
