@@ -14,11 +14,14 @@
 
 typedef struct
 {
-    HAL_StatusTypeDef status;
-    uint16_t value;
+  HAL_StatusTypeDef status;
+  uint16_t value;
 } MCP_Result_t;
 
-MCP_Result_t MCP_WriteSteps(I2C_HandleTypeDef *handle, uint16_t value);
+MCP_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t value);
+
 uint16_t MCP_VoltageToSteps(float voltage);
+
+float MCP_StepsToVoltage(uint16_t steps);
 
 #endif

@@ -23,6 +23,7 @@
 #include "gpio.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
+#include "stm32f4xx_hal_gpio.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -31,7 +32,6 @@
 #include "SEGGER_RTT.h"
 #include "error.h"
 #include "pwr_ctrl.h"
-#include "stm32f4xx_hal_gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,7 +53,7 @@
 
 /* USER CODE BEGIN PV */
 
-Power_Controller_t pwr_ctrl;
+PWR_Ctrl_t pwr_ctrl;
 
 /* USER CODE END PV */
 
@@ -71,36 +71,6 @@ int _write(int file, char *ptr, int len)
     SEGGER_RTT_Write(0, ptr, len);
     return len;
 }
-
-// void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-// {
-//     uint16_t led_pin;
-//     GPIO_TypeDef *btn_port;
-
-//     if (GPIO_Pin == BTN_RED_Pin) {
-//         led_pin = LED_RED_Pin;
-//         btn_port = GPIOB;
-//     } else if (GPIO_Pin == BTN_GREEN_Pin) {
-//         led_pin = LED_GREEN_Pin;
-//         btn_port = GPIOB;
-//     } else if (GPIO_Pin == BTN_BLUE_Pin) {
-//         led_pin = LED_BLUE_Pin;
-//         btn_port = GPIOB;
-//     } else if (GPIO_Pin == BTN_YELLOW_Pin) {
-//         led_pin = LED_YELLOW_Pin;
-//         btn_port = GPIOB;
-//     } else {
-//         return;
-//     }
-
-//     GPIO_PinState btn_state = HAL_GPIO_ReadPin(btn_port, GPIO_Pin);
-
-//     if (btn_state == GPIO_PIN_RESET) {
-//         HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_SET);
-//     } else {
-//         HAL_GPIO_WritePin(GPIOA, led_pin, GPIO_PIN_RESET);
-//     }
-// }
 
 /* USER CODE END 0 */
 
@@ -141,26 +111,12 @@ int main(void)
     HAL_Delay(100);
 
     // TODO: set pins for mosfets
-    Power_Status_t pwr_status = Power_Init(&pwr_ctrl, &hi2c1, GPIOA, GPIO_PIN_11);
+    PWR_Status_t pwr_status = PWR_Init(&pwr_ctrl, &hi2c1);
     if (pwr_status != PWR_OK) {
         // TODO: error handling
     }
 
     HAL_Delay(100);
-
-    uint16_t res;
-
-    res = MCP_VoltageToSteps(3.3);
-    printf("VoltageToSteps: 3V3 = %d steps\r\n", res);
-
-    res = MCP_VoltageToSteps(5.0);
-    printf("VoltageToSteps: 5V = %d steps\r\n", res);
-
-    res = MCP_VoltageToSteps(9.0);
-    printf("VoltageToSteps: 9V = %d steps\r\n", res);
-
-    res = MCP_VoltageToSteps(12.0);
-    printf("VoltageToSteps: 12V = %d steps\r\n\n", res);
 
     /* USER CODE END 2 */
 
@@ -172,7 +128,7 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
         if (count < 4) {
-            Power_SweepRange(&pwr_ctrl, &count);
+            PWR_SweepRange(&pwr_ctrl, &count);
         }
     }
     /* USER CODE END 3 */
