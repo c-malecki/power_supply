@@ -13,27 +13,27 @@ PWR_Status_t PWR_Init(PWR_Ctrl_t *ctrl, I2C_HandleTypeDef *handle) {
 
   ctrl->i2c_handle = handle;
 
-  PWR_Chan_t *3v3 = PWR_Chan_Init(3.3, NULL?,0);
-  PWR_Chan_t *5v = PWR_Chan_Init(5.0, NULL?,0);
-  PWR_Chan_t *vdc = PWR_Chan_Init(0.0, NULL?,0);
+  PWR_Chan_t *chan3v3 = PWR_Chan_Init(3.3, NULL, 0);
+  PWR_Chan_t *chan5v = PWR_Chan_Init(5.0, NULL, 0);
+  PWR_Chan_t *chanCdc = PWR_Chan_Init(0.0, NULL, 0);
 
-  ctrl->chans = {
-    3v3,
-    5v,
-    vdc
-  };
+  ctrl->channels[0] = chan3v3;
+  ctrl->channels[1] = chan5v;
+  ctrl->channels[2] = chanVdc;
 
   err = INA_Init(handle);
   if (err != HAL_OK) {
-    printf("INA_Init: Error: %d\r\n", err);
-    return PWR_ERROR_I2C;
+ printf("INA_Init: Error: %d\r\n", err);
+return PWR_ERROR_I2C;
   }
 
+  /*
   MCP_Result_t mcp_res = MCP_WriteSteps(ctrl->i2c_handle, MCP_VAL_3V3);
   if (mcp_res.status != HAL_OK) {
-    printf("MCP_WriteSteps: Error: %d\r\n", err);
-    return PWR_ERROR_I2C;
+ printf("MCP_WriteSteps: Error: %d\r\n", err);
+ return PWR_ERROR_I2C;
   }
+  */
 
   return PWR_OK;
 }
@@ -67,7 +67,7 @@ PWR_Status_t PWR_Set(PWR_Ctrl_t *ctrl, PWR_Channel_t chan, float target) {
   //
   MCP_Result_t mcp_result = MCP_WriteSteps(ctrl->i2c_handle, target_voltage);
   if (mcp_result.status != HAL_OK) {
-    return PWR_ERROR_I2C;
+ return PWR_ERROR_I2C;
   }
 
   ctrl->channels[chan]->target_voltage = mcp_result.value;
@@ -81,13 +81,60 @@ PWR_Status_t PWR_Read(PWR_Ctrl_t *ctrl, PWR_Channel_t chan) {
   INA_Result_t current = INA_ReadCurrent(ctrl->i2c_handle);
 
   if (voltage.status != HAL_OK || current.status != HAL_OK) {
-    return PWR_ERROR_I2C;
+   return PWR_ERROR_I2C;
   }
 
   ctrl->channels[chan]->cur_voltage = voltage.value;
   ctrl->channels[chan]->cur_current = current.value;
 
   return PWR_OK;
+}
+
+PWR_Status_t PWR_PI_Update(PWR_Ctrl_t *ctrl, PWR_Channel_t chan) {
+  
+PWR_Status_t status = PWR_Read(ctrl, chan);
+ if (status != PWR_OK) return status;
+
+PWR_Chan_t *channel = ctrl->channels[chan];
+
+ float error = channel->target_voltage - channel->cur_voltage;
+
+ uint32_t current_time = HAL_GetTick();
+ float dt = (current_time - channel->pid.last_time) / 1000.0f;
+channel->pid.last_time = current_time;
+
+ float proportional = channel->pid.kp * error;
+channel->pid.integral += error * dt;
+
+ if (channel->pid.integral > 500.0f) channel->pid.integral = 500.0f;
+ if (channel->pid.integral < -500.0f) channel->pid.integral = -500.0f;
+
+float integral = channel->pid.ki * channel->pid.integral;
+
+ // PI output (adjustment in DAC steps)
+ float output = proportional + integral;
+
+// Get current DAC value and adjust
+// Assume we track current DAC value somewhere
+ static uint16_t current_dac = 0;  // Or store in channel struct
+int16_t adjustment = (int16_t)output;
+ int32_t new_dac = (int32_t)current_dac + adjustment;
+
+  // Clamp to valid DAC range
+ if (new_dac < 0) new_dac = 0;
+if (new_dac > 3232) new_dac = 3232;
+
+ current_dac = (uint16_t)new_dac;
+
+MCP_Result_t result = MCP_WriteSteps(ctrl->i2c_handle, current_dac);
+if (result.status != HAL_OK) return PWR_ERROR_I2C;
+
+ if (channel->cur_current > 3.0f) {
+ PWR_Enable(ctrl, chan, false);
+ return PWR_ERROR_OVERCURRENT;
+ }
+
+return PWR_OK;
 }
 
 // steps to adjust by

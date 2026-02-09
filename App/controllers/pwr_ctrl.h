@@ -8,7 +8,7 @@
 typedef struct
 {
   I2C_HandleTypeDef *i2c_handle;
-  PWR_Chan_t *chans[PWR_CHAN_COUNT];
+  PWR_Chan_t *channels[PWR_CHAN_COUNT];
 } PWR_Ctrl_t;
 
 typedef enum {

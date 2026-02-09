@@ -12,9 +12,11 @@ typedef enum {
 } PWR_Channel_t;
 
 typedef struct {
-  int pk;
-  float pi;
-  float t;
+    float p_gain;           
+    float i_gain;     
+    float acc_err;     
+    float prev_error; 
+    uint32_t last_time;
 } PWR_PID_t;
 
 typedef struct
@@ -28,6 +30,6 @@ typedef struct
   PWR_PID_t *pid;
 } PWR_Chan_t;
 
-PWR_Chan_t *PWR_Chan_Init(float target_voltage, GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin);
+void PWR_Chan_Init(PWR_Chan_t *channel,float target_voltage, GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin);
 
 #endif

@@ -1,14 +1,14 @@
 #include "pwr_channel.h"
 
-PWR_Chan_t *PWR_Chan_Init(float target_voltage, GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin) {
-  PWR_Chan_t chan;
-  PWR_PID_t pid;
+void PWR_Chan_Init(PWR_Chan_t *channel, float target_voltage, GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin) {
 
-  chan.target_voltage = target_voltage;
-  chan.mosfet_port = mosfet_port;
-  chan.mosfet_pin = mosfet_pin;
-  chan.output_enabled = false;
-  chan->pid = &pid;
-
-  return &ch;
+  channel.target_voltage = target_voltage;
+  channel.mosfet_port = mosfet_port;
+  channel.mosfet_pin = mosfet_pin;
+  channel.output_enabled = false;
+  channel->pid.kp = 300.0f;
+  channel->pid.ki = 50.0f;
+  channel->pid.integral = 0.0f;
+  channel->pid.prev_error = 0.0f;
+  channel->pid.last_time = HAL_GetTick();
 }
