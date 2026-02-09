@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Middleware/SEGGER_RTT.c"
     "App/controllers/pwr_ctrl.c"
+    "App/controllers/pwr_channel.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
     "App/modules/GME12864-13.c"

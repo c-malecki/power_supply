@@ -3,39 +3,29 @@
 
 #include "stm32f4xx_hal.h"
 #include <stdbool.h>
+#include "pwr_channel.h"
 
 typedef struct
 {
-    // cfg
-    I2C_HandleTypeDef *i2c_handle;
-    GPIO_TypeDef *mosfet_port;
-    uint16_t mosfet_pin;
-    // state
-    uint16_t mcp_target_voltage;
-    float cur_voltage;
-    float cur_current;
-    bool output_enabled;
-} Power_Controller_t;
-
-typedef struct
-{
-    float voltage;
-    float current;
-} Power_Read_Result_t;
+  I2C_HandleTypeDef *i2c_handle;
+  PWR_Chan_t *chans[PWR_CHAN_COUNT];
+} PWR_Ctrl_t;
 
 typedef enum {
-    PWR_OK = 0,
-    PWR_ERROR_I2C,
-    PWR_ERROR_OVERCURRENT,
-    PWR_ERROR_OVERVOLTAGE
-} Power_Status_t;
+  PWR_OK = 0,
+  PWR_ERROR_I2C,
+  PWR_ERROR_OVERCURRENT,
+  PWR_ERROR_OVERVOLTAGE
+} PWR_Status_t;
 
-Power_Status_t Power_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c,
-                          GPIO_TypeDef *mosfet_port, uint16_t mosfet_pin);
-Power_Status_t Power_SetVoltage(Power_Controller_t *ctrl, uint16_t value);
-Power_Status_t Power_Enable(Power_Controller_t *ctrl, bool enable);
-Power_Status_t Power_Update(Power_Controller_t *ctrl);
-Power_Read_Result_t Power_Read(Power_Controller_t *ctrl);
-void Power_SweepRange(Power_Controller_t *ctrl, uint8_t *count);
+PWR_Status_t PWR_Init(PWR_Ctrl_t *ctrl, I2C_HandleTypeDef *i2c);
+
+PWR_Status_t PWR_Enable(PWR_Ctrl_t *ctrl, PWR_Channel_t chan, bool enable);
+
+PWR_Status_t PWR_Set(PWR_Ctrl_t *ctrl, PWR_Channel_t chan, float target);
+
+PWR_Status_t PWR_Read(PWR_Ctrl_t *ctrl, PWR_Channel_t chan);
+
+void PWR_SweepRange(PWR_Ctrl_t *ctrl, uint8_t *count);
 
 #endif
