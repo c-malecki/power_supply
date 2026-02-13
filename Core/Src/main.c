@@ -32,6 +32,7 @@
 #include "SEGGER_RTT.h"
 #include "error.h"
 #include "app.h"
+#include "chan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -123,14 +124,15 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    // uint8_t count = 1;
+
     while (1) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        // if (count < 4) {
-        // PWR_SweepRange(&pwr_ctrl, &count);
-        // }
+        status = App_Test(&app);
+        if (status.err != 0) {
+            printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
+        }
     }
     /* USER CODE END 3 */
 }

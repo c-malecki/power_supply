@@ -1,5 +1,6 @@
 #include "stm32f4xx_hal.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include "float.h"
 #include "chan.h"
 #include "MCP4725.h"
@@ -47,12 +48,14 @@ void PWR_Chan_Enable(PWR_Chan_t *chan, bool enabled)
 uint8_t PWR_Chan_Set(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle, float target_voltage)
 {
     uint8_t err;
+    uint16_t steps = MCP_VoltageToSteps(target_voltage);
 
-    err = MCP_SetSteps(i2c_handle, target_voltage);
+    err = MCP_SetSteps(i2c_handle, steps);
     if (err != HAL_OK) {
         return err;
     }
 
+    chan->dac_steps = steps;
     chan->target_voltage = target_voltage;
 
     return err;
@@ -128,52 +131,3 @@ uint8_t PWR_Chan_PI_Start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
 
     return HAL_OK;
 }
-
-/**
-* Test values were with ST-Link connected and 1kR as load
-*
-* V: 12.0280V | I: 11.9000mA | P: 143.1332mW
-* V: 9.0240V | I: 8.9000mA | P: 80.3136mW
-* V: 5.0640V | I: 5.0000mA | P: 25.3200mW
-* V: 3.3080V | I: 3.1000mA | P: 10.2548mW
-
-* V: 12.0280V | I: 11.9000mA | P: 143.1332mW
-* V: 9.0200V | I: 8.9000mA | P: 80.2780mW
-* V: 5.0560V | I: 4.6000mA | P: 23.2576mW
-* V: 3.3040V | I: 3.2000mA | P: 10.5728mW
-
-* V: 12.0280V | I: 11.9000mA | P: 143.1332mW
-* V: 9.0160V | I: 9.2000mA | P: 82.9472mW
-* V: 5.0520V | I: 4.7000mA | P: 23.7444mW
-* V: 3.3080V | I: 3.4000mA | P: 11.2472mW
-*
-*/
-// void PWR_SweepRange(PWR_Ctrl_t *ctrl, uint8_t *count)
-// {
-//     uint16_t range[4] = { MCP_VAL_12V, MCP_VAL_9V, MCP_VAL_5V, MCP_VAL_3V3 };
-
-//     for (int i = 0; i < 4; i++) {
-
-//         MCP_Result_t mcp_result = MCP_SetSteps(ctrl->i2c_handle, range[i]);
-//         if (mcp_result.status != HAL_OK) {
-//             printf("Power_SweepRange: Error: %d\r\n", mcp_result.status);
-//             return;
-//         }
-
-//         HAL_Delay(200);
-
-//         INA_Result_t current = INA_ReadCurrent(ctrl->i2c_handle);
-//         INA_Result_t voltage = INA_ReadVoltage(ctrl->i2c_handle);
-//         float power = voltage.value * current.value;
-
-//         printf("V: %.4fV | I: %.4fmA | P: %.4fmW\n", voltage.value, current.value, power);
-
-//         if (i == 3) {
-//             printf("\n");
-//         }
-
-//         HAL_Delay(1000);
-//     }
-
-//     (*count)++;
-// }
