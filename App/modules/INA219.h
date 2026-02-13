@@ -8,16 +8,8 @@
 #define INA_CURR 0x04
 #define INA_CALR 0x05
 
-typedef struct
-{
-    HAL_StatusTypeDef status;
-    float value;
-} INA_Result_t;
-
-HAL_StatusTypeDef INA_Init(I2C_HandleTypeDef *handle);
-
-INA_Result_t INA_ReadCurrent(I2C_HandleTypeDef *handle);
-
-INA_Result_t INA_ReadVoltage(I2C_HandleTypeDef *handle);
+uint8_t INA_Init(I2C_HandleTypeDef *i2c_handle);
+uint8_t INA_ReadCurrent(I2C_HandleTypeDef *i2c_handle, float *result);
+uint8_t INA_ReadVoltage(I2C_HandleTypeDef *i2c_handle, float *result);
 
 #endif

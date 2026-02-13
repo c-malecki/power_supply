@@ -31,7 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include "SEGGER_RTT.h"
 #include "error.h"
-#include "pwr_ctrl.h"
+#include "app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,7 +53,11 @@
 
 /* USER CODE BEGIN PV */
 
-PWR_Ctrl_t pwr_ctrl;
+APP_t app;
+APP_Status_t status;
+static char *app_ctrls[3] = { "APP", "PWR", "DSP" };
+static char *app_errs[6] = { "OK",          "I2C Error",       "I2C Busy",
+                             "I2C Timeout", "PWR Overcurrent", "PWR Overvoltage" };
 
 /* USER CODE END PV */
 
@@ -65,13 +69,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 int _write(int file, char *ptr, int len)
 {
     SEGGER_RTT_Write(0, ptr, len);
     return len;
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -110,10 +112,9 @@ int main(void)
 
     HAL_Delay(100);
 
-    // TODO: set pins for mosfets
-    PWR_Status_t pwr_status = PWR_Init(&pwr_ctrl, &hi2c1);
-    if (pwr_status != PWR_OK) {
-        // TODO: error handling
+    status = App_Init(&app, &hi2c1);
+    if (status.err != 0) {
+        printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
     }
 
     HAL_Delay(100);
@@ -122,14 +123,14 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    uint8_t count = 1;
+    // uint8_t count = 1;
     while (1) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        if (count < 4) {
-            PWR_SweepRange(&pwr_ctrl, &count);
-        }
+        // if (count < 4) {
+        // PWR_SweepRange(&pwr_ctrl, &count);
+        // }
     }
     /* USER CODE END 3 */
 }
