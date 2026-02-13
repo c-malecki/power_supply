@@ -2,6 +2,7 @@
 #define __MCP4725_H__
 
 #include "stm32f4xx_hal.h"
+#include <sys/types.h>
 
 #define MCP_I2C_ADDR 0x60 << 1
 
