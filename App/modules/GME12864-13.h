@@ -5,6 +5,6 @@
 
 #define OLED_I2C_ADDR 0x3C << 1
 
-HAL_StatusTypeDef OLED_WriteCmd(I2C_HandleTypeDef *handle);
+uint8_t OLED_WriteCmd(I2C_HandleTypeDef *handle);
 
 #endif
