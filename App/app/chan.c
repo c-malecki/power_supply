@@ -7,6 +7,9 @@
 #include "INA219.h"
 #include "stm32f4xx_hal_def.h"
 
+static uint8_t update_values(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle);
+static uint8_t pi_start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle);
+
 // TODO: set pins for mosfets
 void PWR_Chan_Init(PWR_Chan_t *chan, float target_voltage, GPIO_TypeDef *mosfet_port,
                    uint16_t mosfet_pin)
@@ -58,37 +61,34 @@ uint8_t PWR_Chan_Set(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle, float targ
     chan->dac_steps = steps;
     chan->target_voltage = target_voltage;
 
-    return err;
+    // TODO: How to do this non-blocking?
+    HAL_Delay(200);
+
+    return update_values(chan, i2c_handle);
 }
 
-uint8_t PWR_Chan_Update(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
+static uint8_t update_values(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
 {
     uint8_t err;
-    float voltage, current;
+    float voltage, current, power;
 
-    err = INA_ReadVoltage(i2c_handle, &voltage);
+    err = INA_Read(i2c_handle, &voltage, &current);
     if (err != HAL_OK) {
         return err;
     }
 
-    err = INA_ReadCurrent(i2c_handle, &current);
-    if (err != HAL_OK) {
-        return err;
-    }
+    power = voltage * current;
 
     chan->cur_voltage = voltage;
     chan->cur_current = current;
+    chan->cur_power = power;
 
     return err;
 }
 
-uint8_t PWR_Chan_PI_Start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
+static uint8_t pi_start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
 {
-    uint8_t err = PWR_Chan_Update(chan, i2c_handle);
-    if (err != HAL_OK) {
-        return err;
-    }
-
+    uint8_t err;
     float error = chan->target_voltage - chan->cur_voltage;
 
     uint32_t current_time = HAL_GetTick();

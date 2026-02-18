@@ -19,7 +19,7 @@ APP_Status_t App_Init(APP_t *app, I2C_HandleTypeDef *i2c_handle)
 
     PWR_Chan_Init(&chan_3v3, 3.3, NULL, 0);
     PWR_Chan_Init(&chan_5v, 5.0, NULL, 0);
-    PWR_Chan_Init(&chan_vdc, 0.0, NULL, 0);
+    PWR_Chan_Init(&chan_vdc, 3.3, NULL, 0);
 
     app->pwr_chans[CHAN_3V3] = &chan_3v3;
     app->pwr_chans[CHAN_5V] = &chan_5v;
@@ -61,21 +61,15 @@ APP_Status_t App_Test(APP_t *app)
     status.ctrl = PWR_CTRL;
 
     float base_voltage = 3.3;
-    float increments[6] = { 0, 1.7, 2, 2, 1, 2 };
+    float increments[6] = { 0.0, 1.7, 2.0, 2.0, 1.0, 2.0 };
 
     PWR_Chan_Enable(app->pwr_chans[CHAN_VDC], true);
 
+    printf("***App_Test***\n\n");
+
     for (int i = 0; i < 6; i++) {
-        uint8_t err =
-            PWR_Chan_Set(app->pwr_chans[CHAN_VDC], app->i2c_handle, base_voltage + increments[i]);
-        if (err != HAL_OK) {
-            status.err = err;
-            return status;
-        }
-
-        HAL_Delay(200);
-
-        err = PWR_Chan_Update(app->pwr_chans[CHAN_VDC], app->i2c_handle);
+        base_voltage = base_voltage + increments[i];
+        uint8_t err = PWR_Chan_Set(app->pwr_chans[CHAN_VDC], app->i2c_handle, base_voltage);
         if (err != HAL_OK) {
             status.err = err;
             return status;
@@ -85,13 +79,10 @@ APP_Status_t App_Test(APP_t *app)
         float current = app->pwr_chans[CHAN_VDC]->cur_current;
         float power = voltage * current;
 
-        printf("Target V: %.4fV\n", app->pwr_chans[CHAN_VDC]->target_voltage);
-        printf("V: %.4fV | I: %.4fmA | P: %.4fmW\n", voltage, current, power);
-        if (i == 5) {
-            printf("\n");
-        }
+        printf("target_v: %.4f\ncur_v: %.4fV\ncur_i: %.4fmA\ncur_p: %.4fmW\n\n", base_voltage,
+               voltage, current, power);
 
-        HAL_Delay(1000);
+        HAL_Delay(2000);
     }
 
     return status;

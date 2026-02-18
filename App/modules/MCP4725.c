@@ -4,17 +4,15 @@
 #include "stdint.h"
 #include <stdint.h>
 
-// TODO: add address as param and set up different addresses for channels
-// for the INA to monitor
 uint8_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps)
 {
     uint8_t pData[2];
 
-    if (steps < MCP_VAL_12V)
-        steps = MCP_VAL_12V;
+    if (steps < MCP_STEP_MIN)
+        steps = MCP_STEP_MIN;
 
-    if (steps > MCP_VAL_3V3)
-        steps = MCP_VAL_3V3;
+    if (steps > MCP_STEP_MAX)
+        steps = MCP_STEP_MAX;
 
     pData[0] = (steps >> 8) & 0x0F;
     pData[1] = steps & 0xFF;
@@ -24,10 +22,10 @@ uint8_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps)
 
 uint16_t MCP_VoltageToSteps(float target_voltage)
 {
-    return (uint16_t)Float_To_UInt16((12 - target_voltage) / MCP_Step);
+    return (uint16_t)Float_To_UInt16((12 - target_voltage) / MCP_STEP_VOLTAGE);
 }
 
-float MCP_StepsToVoltage(uint16_t steps)
-{
-    return steps * MCP_Step;
-}
+// float MCP_StepsToVoltage(uint16_t steps)
+// {
+//     return steps * MCP_STEP_VOLTAGE;
+// }

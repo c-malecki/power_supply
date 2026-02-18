@@ -14,7 +14,7 @@ typedef struct
 typedef enum {
     APP_CTRL = 0,
     PWR_CTRL,
-    OLED_CTRL
+    DSP_CTRL
 } APP_Ctrl_t;
 
 typedef struct

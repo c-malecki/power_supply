@@ -29,6 +29,7 @@ typedef struct
     uint16_t mosfet_pin;
     float cur_voltage;
     float cur_current;
+    float cur_power;
     bool output_enabled;
     PWR_PID_t *pid;
 } PWR_Chan_t;
@@ -37,7 +38,5 @@ void PWR_Chan_Init(PWR_Chan_t *chan, float target_voltage, GPIO_TypeDef *mosfet_
                    uint16_t mosfet_pin);
 void PWR_Chan_Enable(PWR_Chan_t *chan, bool enabled);
 uint8_t PWR_Chan_Set(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle, float target_voltage);
-uint8_t PWR_Chan_Update(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle);
-uint8_t PWR_Chan_PI_Start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle);
 
 #endif
