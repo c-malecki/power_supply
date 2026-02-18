@@ -102,15 +102,12 @@ int main(void)
 
     /* USER CODE BEGIN SysInit */
 
-    // SEGGER_RTT_Init();
-
     /* USER CODE END SysInit */
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
-
     HAL_Delay(100);
 
     status = App_Init(&app, &hi2c1);
