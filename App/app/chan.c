@@ -24,8 +24,8 @@ void PWR_Chan_Init(PWR_Chan_t *chan, float target_voltage, GPIO_TypeDef *mosfet_
 void PWR_Chan_Enable(PWR_Chan_t *chan, bool enabled)
 {
     HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, enabled ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    chan->pid->p_gain = 300.0f;
-    chan->pid->i_gain = 50.0f;
+    chan->pid->p_gain = 50.0f;
+    chan->pid->i_gain = 5.0f;
     chan->pid->acc_err = 0.0f;
     chan->pid->prev_error = 0.0f;
     chan->pid->last_time = HAL_GetTick();
@@ -86,14 +86,33 @@ static uint8_t update_values(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
     return err;
 }
 
+/*
+Your DAC is inverted (lower DAC = higher voltage). If error is positive (need more voltage), you
+want to decrease DAC steps:
+
+    int16_t adjustment = -(int16_t)step_adjustment;  // Negate for inverted
+
+DAC Test this - if PI drives the wrong direction, add the negative sign.
+
+Consider deadband to prevent oscillation:
+
+    if (fabs(error) < 0.05f) {  // Within 50mV, don't adjust
+        return HAL_OK;
+    }
+*/
 static uint8_t pi_start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
 {
     uint8_t err;
     float error = chan->target_voltage - chan->cur_voltage;
 
     uint32_t current_time = HAL_GetTick();
-
     float delta_time = (current_time - chan->pid->last_time) / 1000.0f;
+
+    if (delta_time > 1.0f) {
+        chan->pid->last_time = current_time;
+        return HAL_OK;
+    }
+
     chan->pid->last_time = current_time;
 
     float proportion = chan->pid->p_gain * error;
@@ -115,8 +134,8 @@ static uint8_t pi_start(PWR_Chan_t *chan, I2C_HandleTypeDef *i2c_handle)
     if (dac_steps < 0) {
         dac_steps = 0;
     }
-    if (dac_steps > 3232) {
-        dac_steps = 3232;
+    if (dac_steps > 3250) {
+        dac_steps = 3250;
     }
 
     err = MCP_SetSteps(i2c_handle, (uint16_t)dac_steps);

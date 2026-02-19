@@ -8,7 +8,7 @@
 
 #define MCP_STEP_VOLTAGE 0.002691
 #define MCP_STEP_MIN 0
-#define MCP_STEP_MAX 3250
+#define MCP_STEP_MAX 4095
 
 uint8_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps);
 uint16_t MCP_VoltageToSteps(float voltage);

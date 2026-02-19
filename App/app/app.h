@@ -2,19 +2,22 @@
 #define __APP_H__
 
 #include "stm32f4xx_hal.h"
-#include "chan.h"
+#include "fdc.h"
+#include "vdc.h"
 #include <stdint.h>
 
 typedef struct
 {
-    I2C_HandleTypeDef *i2c_handle;
-    PWR_Chan_t *pwr_chans[3];
+    I2C_HandleTypeDef *i2c_handle; // used by various I2C components
+    FDC_Channel_t *chan_3v3; // controlled by buck and MOSFET only
+    FDC_Channel_t *chan_5v; // controlled by buck and MOSFET only
+    VDC_Channel_t *chan_vdc; // controlled by buck, dac, current sensor, and PI loop
 } APP_t;
 
 typedef enum {
     APP_CTRL = 0,
     PWR_CTRL,
-    DSP_CTRL
+    DSP_CTRL,
 } APP_Ctrl_t;
 
 typedef struct
