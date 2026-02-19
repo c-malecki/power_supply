@@ -52,16 +52,10 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VDC_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : BTN_VDC_PRE1_Pin */
-  GPIO_InitStruct.Pin = BTN_VDC_PRE1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BTN_VDC_PRE1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : BTN_VDC_PRE2_Pin BTN_VDC_PRE3_Pin */
-  GPIO_InitStruct.Pin = BTN_VDC_PRE2_Pin|BTN_VDC_PRE3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  /*Configure GPIO pins : BTN_3V3_Pin BTN_5V_Pin BTN_VDC_Pin ROT_SW_Pin */
+  GPIO_InitStruct.Pin = BTN_3V3_Pin|BTN_5V_Pin|BTN_VDC_Pin|ROT_SW_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ROT_CLK_Pin ROT_DT_Pin */
@@ -69,12 +63,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : ROT_SW_Pin */
-  GPIO_InitStruct.Pin = ROT_SW_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(ROT_SW_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOSFET_3V3_Pin MOSFET_5V_Pin MOSFET_VDC_Pin */
   GPIO_InitStruct.Pin = MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VDC_Pin;

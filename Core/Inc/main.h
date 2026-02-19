@@ -57,15 +57,15 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BTN_VDC_PRE1_Pin GPIO_PIN_1
-#define BTN_VDC_PRE1_GPIO_Port GPIOA
-#define BTN_VDC_PRE1_EXTI_IRQn EXTI1_IRQn
-#define BTN_VDC_PRE2_Pin GPIO_PIN_2
-#define BTN_VDC_PRE2_GPIO_Port GPIOA
-#define BTN_VDC_PRE2_EXTI_IRQn EXTI2_IRQn
-#define BTN_VDC_PRE3_Pin GPIO_PIN_3
-#define BTN_VDC_PRE3_GPIO_Port GPIOA
-#define BTN_VDC_PRE3_EXTI_IRQn EXTI3_IRQn
+#define BTN_3V3_Pin GPIO_PIN_1
+#define BTN_3V3_GPIO_Port GPIOA
+#define BTN_3V3_EXTI_IRQn EXTI1_IRQn
+#define BTN_5V_Pin GPIO_PIN_2
+#define BTN_5V_GPIO_Port GPIOA
+#define BTN_5V_EXTI_IRQn EXTI2_IRQn
+#define BTN_VDC_Pin GPIO_PIN_3
+#define BTN_VDC_GPIO_Port GPIOA
+#define BTN_VDC_EXTI_IRQn EXTI3_IRQn
 #define ROT_CLK_Pin GPIO_PIN_4
 #define ROT_CLK_GPIO_Port GPIOA
 #define ROT_DT_Pin GPIO_PIN_5

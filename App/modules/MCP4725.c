@@ -22,7 +22,7 @@ uint8_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps)
 
 uint16_t MCP_VoltageToSteps(float target_voltage)
 {
-    return (uint16_t)Float_To_UInt16((12 - target_voltage) / MCP_STEP_VOLTAGE);
+    return (uint16_t)Float_To_UInt16((12.0f - target_voltage) / MCP_STEP_VOLTAGE);
 }
 
 // float MCP_StepsToVoltage(uint16_t steps)

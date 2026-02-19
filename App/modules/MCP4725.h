@@ -6,7 +6,7 @@
 
 #define MCP_I2C_ADDR 0x60 << 1
 
-#define MCP_STEP_VOLTAGE 0.002691
+#define MCP_STEP_VOLTAGE 0.002704f
 #define MCP_STEP_MIN 0
 #define MCP_STEP_MAX 4095
 
