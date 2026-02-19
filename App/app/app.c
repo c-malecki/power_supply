@@ -1,13 +1,16 @@
 #include "app.h"
-#include "chan.h"
+#include "fdc.h"
+#include "main.h"
+#include "vdc.h"
 #include "MCP4725.h"
 #include "INA219.h"
+#include "stm32f4xx_hal_def.h"
 #include <stdint.h>
 #include <stdio.h>
 
-PWR_Chan_t chan_3v3;
-PWR_Chan_t chan_5v;
-PWR_Chan_t chan_vdc;
+FDC_Channel_t chan_3v3;
+FDC_Channel_t chan_5v;
+VDC_Channel_t chan_vdc;
 
 APP_Status_t App_Init(APP_t *app, I2C_HandleTypeDef *i2c_handle)
 {
@@ -17,13 +20,10 @@ APP_Status_t App_Init(APP_t *app, I2C_HandleTypeDef *i2c_handle)
 
     app->i2c_handle = i2c_handle;
 
-    PWR_Chan_Init(&chan_3v3, 3.3, NULL, 0);
-    PWR_Chan_Init(&chan_5v, 5.0, NULL, 0);
-    PWR_Chan_Init(&chan_vdc, 3.3, NULL, 0);
-
-    app->pwr_chans[CHAN_3V3] = &chan_3v3;
-    app->pwr_chans[CHAN_5V] = &chan_5v;
-    app->pwr_chans[CHAN_VDC] = &chan_vdc;
+    FDC_Channel_Init(&chan_3v3, 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin);
+    FDC_Channel_Init(&chan_5v, 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin);
+    VDC_Channel_Init(&chan_vdc);
+    app->chan_vdc = &chan_vdc;
 
     HAL_StatusTypeDef err = INA_Init(i2c_handle);
     if (err != 0) {
@@ -60,26 +60,26 @@ APP_Status_t App_Test(APP_t *app)
     APP_Status_t status;
     status.ctrl = PWR_CTRL;
 
-    float base_voltage = 3.3;
-    float increments[6] = { 0.0, 1.7, 2.0, 2.0, 1.0, 2.0 };
+    float base_voltage = 0.0;
+    float increments[7] = { 0.0, 3.3, 1.7, 2.0, 2.0, 1.0, 2.0 };
 
-    PWR_Chan_Enable(app->pwr_chans[CHAN_VDC], true);
+    VDC_Channel_Enable(app->chan_vdc, true);
 
-    printf("***App_Test***\n\n");
+    printf("***App_Test***\r\n\n");
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         base_voltage = base_voltage + increments[i];
-        uint8_t err = PWR_Chan_Set(app->pwr_chans[CHAN_VDC], app->i2c_handle, base_voltage);
+        uint8_t err = VDC_Channel_Set(app->chan_vdc, app->i2c_handle, base_voltage);
         if (err != HAL_OK) {
             status.err = err;
             return status;
         }
 
-        float voltage = app->pwr_chans[CHAN_VDC]->cur_voltage;
-        float current = app->pwr_chans[CHAN_VDC]->cur_current;
+        float voltage = app->chan_vdc->cur_voltage;
+        float current = app->chan_vdc->cur_current;
         float power = voltage * current;
 
-        printf("target_v: %.4f\ncur_v: %.4fV\ncur_i: %.4fmA\ncur_p: %.4fmW\n\n", base_voltage,
+        printf("target_v: %.4f\ncur_v: %.4fV\ncur_i: %.4fmA\ncur_p: %.4fmW\r\n\n", base_voltage,
                voltage, current, power);
 
         HAL_Delay(2000);

@@ -18,21 +18,17 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "MCP4725.h"
 #include "i2c.h"
 #include "gpio.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_hal_gpio.h"
-#include <stdint.h>
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SEGGER_RTT.h"
 #include "error.h"
 #include "app.h"
-#include "chan.h"
+#include "vdc.h"
+#include <stdint.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +55,20 @@ APP_Status_t status;
 static char *app_ctrls[3] = { "APP", "PWR", "DSP" };
 static char *app_errs[6] = { "OK",          "I2C Error",       "I2C Busy",
                              "I2C Timeout", "PWR Overcurrent", "PWR Overvoltage" };
+uint8_t err;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == app.chan_vdc->rot->sw_pin) {
+        static uint32_t last_press = 0;
+        uint32_t now = HAL_GetTick();
+
+        if (now - last_press > 50) {
+            app.chan_vdc->rot->pressed = true;
+            last_press = now;
+        }
+    }
+}
 
 /* USER CODE END PV */
 
@@ -114,7 +124,6 @@ int main(void)
     if (status.err != 0) {
         printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
     }
-
     HAL_Delay(100);
 
     /* USER CODE END 2 */
@@ -126,10 +135,17 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        status = App_Test(&app);
-        if (status.err != 0) {
-            printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
+        HAL_Delay(100);
+        err = VDC_Rotary_Poll(app.chan_vdc, app.i2c_handle);
+        if (err != 0) {
+            printf("%s Error: %d; %s\r\n", app_ctrls[status.ctrl], status.err,
+                   app_errs[status.err]);
         }
+
+        // status = App_Test(&app);
+        // if (status.err != 0) {
+        //     printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
+        // }
     }
     /* USER CODE END 3 */
 }

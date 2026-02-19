@@ -4,6 +4,8 @@
 #include "stm32f4xx_hal.h"
 #include <stdbool.h>
 
+#define MIN_VOLTAGE 0.0f
+#define MAX_VOLTAGE 12.0f
 #define MAX_CURRENT 1.0f
 
 typedef enum {
