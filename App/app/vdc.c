@@ -1,4 +1,3 @@
-#include "main.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 #include "gpio.h"
@@ -20,8 +19,8 @@ static uint8_t pi_start(VDC_Channel_t *chan, I2C_HandleTypeDef *i2c_handle);
 void VDC_Channel_Init(VDC_Channel_t *chan)
 {
 
-    chan->target_voltage = VDC_MIN_VOLTAGE;
-    chan->cur_dac_steps = MCP_VoltageToSteps(VDC_MIN_VOLTAGE);
+    chan->target_voltage = 3.3f;
+    chan->cur_dac_steps = MCP_VoltageToSteps(3.3f);
     chan->mosfet_port = MOSFET_VDC_GPIO_Port;
     chan->mosfet_pin = MOSFET_VDC_Pin;
     chan->output_enabled = false;
@@ -41,13 +40,41 @@ void VDC_Channel_Init(VDC_Channel_t *chan)
 
 void VDC_Channel_Enable(VDC_Channel_t *chan, bool enabled)
 {
-    HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, enabled ? GPIO_PIN_SET : GPIO_PIN_RESET);
     chan->pid->p_gain = 50.0f;
     chan->pid->i_gain = 5.0f;
     chan->pid->acc_err = 0.0f;
     chan->pid->prev_error = 0.0f;
     chan->pid->last_time = HAL_GetTick();
     chan->output_enabled = enabled;
+    printf("VDC_Channel_Enable: %u\r\n\n", enabled);
+
+    if (enabled) {
+        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
+    } else {
+        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
+    }
+}
+
+uint8_t VDC_Channel_Set(VDC_Channel_t *chan, I2C_HandleTypeDef *i2c_handle, float target_voltage)
+{
+    uint8_t err;
+    uint16_t steps = MCP_VoltageToSteps(target_voltage);
+
+    err = MCP_SetSteps(i2c_handle, steps);
+    if (err != HAL_OK) {
+        return err;
+    }
+
+    chan->cur_dac_steps = steps;
+    chan->target_voltage = target_voltage;
+
+    printf("VDC_Channel_Set:\ncur_dac_steps %u\ntarget_voltage %.4f\r\n\n", chan->cur_dac_steps,
+           chan->target_voltage);
+
+    // TODO: How to do this non-blocking?
+    HAL_Delay(200);
+
+    return update_values(chan, i2c_handle);
 }
 
 static int8_t rotary_read(VDC_Rotary_t *rot)
@@ -126,41 +153,6 @@ uint8_t VDC_Rotary_Poll(VDC_Channel_t *chan, I2C_HandleTypeDef *i2c_handle)
     }
 
     return err;
-}
-
-/**
- *  @brief Changes the DAC's output voltage to the feedback pin via voltage injection
- *  ΔV = 3.3V - 12V = -8.7V
- *  ΔStep = -8.7 / 3232 = 0.00269183
- *                        ^ ^^^^^
- *                        using float so limited to 7 digits
- *
- *  0    = ~12.00V
- *  1130 = ~9.00V
- *  2590 = ~5.00
- *  3232 = ~3.30
- *
- * @param ctrl Pointer to the PWR_Ctrl_t instance.
- * @param value 0 to 3232 : 12V tp 3.3V Value to change DAC's output voltage.
- * @retval PWR_Status_t
- */
-uint8_t VDC_Channel_Set(VDC_Channel_t *chan, I2C_HandleTypeDef *i2c_handle, float target_voltage)
-{
-    uint8_t err;
-    uint16_t steps = MCP_VoltageToSteps(target_voltage);
-
-    err = MCP_SetSteps(i2c_handle, steps);
-    if (err != HAL_OK) {
-        return err;
-    }
-
-    chan->cur_dac_steps = steps;
-    chan->target_voltage = target_voltage;
-
-    // TODO: How to do this non-blocking?
-    HAL_Delay(200);
-
-    return update_values(chan, i2c_handle);
 }
 
 static uint8_t update_values(VDC_Channel_t *chan, I2C_HandleTypeDef *i2c_handle)

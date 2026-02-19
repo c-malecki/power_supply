@@ -23,6 +23,9 @@ APP_Status_t App_Init(APP_t *app, I2C_HandleTypeDef *i2c_handle)
     FDC_Channel_Init(&chan_3v3, 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin);
     FDC_Channel_Init(&chan_5v, 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin);
     VDC_Channel_Init(&chan_vdc);
+
+    app->chan_3v3 = &chan_3v3;
+    app->chan_5v = &chan_5v;
     app->chan_vdc = &chan_vdc;
 
     HAL_StatusTypeDef err = INA_Init(i2c_handle);

@@ -4,6 +4,7 @@
 #include "stm32f4xx_hal.h"
 #include "vdc.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct
 {
@@ -15,5 +16,6 @@ typedef struct
 
 void FDC_Channel_Init(FDC_Channel_t *chan, float target_voltage, GPIO_TypeDef *mosfet_port,
                       uint16_t mosfet_pin);
+void FDC_Channel_Enable(FDC_Channel_t *chan, bool enabled);
 
 #endif
