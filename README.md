@@ -1,6 +1,6 @@
 # Variable Digital Power Supply
 
-A digitally controlled variable bench power supply unit with fixed and variable output channels, PID secured accuracy and safety mechanisms, programmable presets for the variable channel.
+A digitally controlled variable bench power supply unit with fixed and variable output channels, PID secured accuracy, safety controls for temperature, voltage, and current, and programmable presets for the variable channel.
 
 *This document is subject to change as I continue to work on the project and make adjustments through iterative design.*
 
@@ -18,10 +18,10 @@ Designing and building my own tools seemed like a great way to learn since the s
 - Variable output channel: 3V3 to 12V
 - Fixed 3V3 output channel
 - Fixed 5V output channel
-- OLED display to see variable output metrics: voltage and current
-- LED status indicators for debugging, on/off state for output channels, and on/off for master power
+- OLED display: simple UI for readings or functionality selection
+- LEDs for status indicators: on/off for master power, error codes for debugging, and on/off state for output channels
 - Software based safety controls for automatic shutoffs
-- PID control for variable output to ensure accuracy and consistency
+- PI control for variable output to ensure accuracy and consistency
 - Programmable presets for variable output
 
 ## Development Process
@@ -56,14 +56,15 @@ Depends on previous.
 
 ## Prototype Materials
 
-In the current prototype state, there are 6 main components:
+In the current prototype state, there are 7 main components:
 
 1. 1x STM32F411CE dev board
-2. 2x LM2596 buck converter modules with manual adjustment via 10kΩ potentiometer
-3. 1x MCP4725 16bit DAC modules
+2. 2x LM2596 buck converter modules; 1 with manual adjustment via 10kΩ potentiometer
+4. 1x AMS1117 3V3 1A LDO module
 4. 1x INA219 currenr sensor module
-5. 4x IRLZ44N MOSFETs
-6. 1x GME12864-13 OLED display
+5. 1x MCP4725 16bit DAC modules
+6. 4x IRLZ44N MOSFETs
+7. 1x GME12864-13 OLED display module
 
 ### STM32F411CE Dev Board
 
@@ -79,13 +80,17 @@ The module already includes a two resistor divider; 330Ω to GND and the pot. To
 
 The fixed outs were simple enough since it just required measuring with a multimeter and turning the pot screws until reaching 3V3 and 5V.
 
-### MCP4725 DAC
+### AMS1117 3V3 1A LDO
 
-Since the dev board did not include a DAC, I needed an external one. This again was just a cheap option with very little in-depth analysis since this was all part of the learning process.
+Had these on hand and worked well enough to feed to 5V LM2596 into the 3V3 LDO for the 3V3 out channel
 
 ### INA219 Current Sensor
 
 A very important component, the INA219 is what monitors and provides metrics for the output voltage and current, as well as data for the OLED display and intelligent decision to moderate operation.
+
+### MCP4725 DAC
+
+Since the dev board did not include a DAC, I needed an external one. This again was just a cheap option with very little in-depth analysis since this was all part of the learning process.
 
 ### IRLZ44N MOSFETs
 
@@ -95,3 +100,8 @@ Also incredibly important as these are the digital switches that respond to data
 
 Keeping with the theme, this was selected mainly as a cheap option for prototyping and learning purposes.
 
+## Prototype Software Architecture
+
+I'm still working out the software as I go. It's a mix of experimentation, design, and iteration.
+
+![Software Architecture Diagram](./docs/design/psu_app_architecture.jpg)
