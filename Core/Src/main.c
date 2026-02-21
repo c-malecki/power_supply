@@ -26,8 +26,7 @@
 #include "SEGGER_RTT.h"
 #include "error.h"
 #include "app.h"
-#include "fdc.h"
-#include "vdc.h"
+#include "power_controller.h"
 #include <stdint.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -51,8 +50,8 @@
 
 /* USER CODE BEGIN PV */
 
-APP_t app;
-APP_Status_t status;
+App_t app;
+App_Status_t status;
 static char *app_ctrls[3] = { "APP", "PWR", "DSP" };
 static char *app_errs[6] = { "OK",          "I2C Error",       "I2C Busy",
                              "I2C Timeout", "PWR Overcurrent", "PWR Overvoltage" };
@@ -60,7 +59,7 @@ uint8_t err;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    static uint32_t last_press_rot = 0;
+    static uint32_t last_press_rotary = 0;
     static uint32_t last_press_3v3 = 0;
     static uint32_t last_press_5v = 0;
     static uint32_t last_press_vdc = 0;
@@ -68,10 +67,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     switch (GPIO_Pin) {
     case ROT_SW_Pin:
-        if (now - last_press_rot < 100)
+        if (now - last_press_rotary < 100)
             return;
-        last_press_rot = now;
-        app.chan_vdc->rot->pressed = true;
+        last_press_rotary = now;
+        app.pwr_ctrl->chan_var->rotary->pressed = true;
         break;
 
     case BTN_3V3_Pin:
@@ -79,8 +78,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_3v3 < 100)
             return;
         last_press_3v3 = now;
-        bool enabled = !app.chan_3v3->output_enabled;
-        FDC_Channel_Enable(app.chan_3v3, enabled);
+        bool enabled = !app.pwr_ctrl->chan_3v3->output_enabled;
+        Channel_VDC_Enable_Output(app.pwr_ctrl->chan_3v3, enabled);
         printf("3V3 enabled = %d\r\n", enabled);
         break;
     }
@@ -90,8 +89,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_5v < 100)
             return;
         last_press_5v = now;
-        bool enabled = !app.chan_5v->output_enabled;
-        FDC_Channel_Enable(app.chan_5v, enabled);
+        bool enabled = !app.pwr_ctrl->chan_5v->output_enabled;
+        Channel_VDC_Enable_Output(app.pwr_ctrl->chan_5v, enabled);
         printf("5V enabled = %d\r\n", enabled);
         break;
     }
@@ -100,12 +99,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_vdc < 100)
             return;
         last_press_vdc = now;
-        bool enabled = !app.chan_vdc->output_enabled;
-        VDC_Channel_Enable(app.chan_vdc, enabled);
+        bool enabled = !app.pwr_ctrl->chan_var->output_enabled;
+        Channel_VAR_Enable_Output(app.pwr_ctrl->chan_var, enabled);
         printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
                "%.4fmA\r\n\n",
-               enabled, app.chan_vdc->target_voltage, app.chan_vdc->cur_voltage,
-               app.chan_vdc->cur_dac_steps, app.chan_vdc->cur_current);
+               enabled, app.pwr_ctrl->chan_var->target_voltage, app.pwr_ctrl->chan_var->cur_voltage,
+               app.pwr_ctrl->chan_var->cur_dac_steps, app.pwr_ctrl->chan_var->cur_current);
         break;
     }
 }
@@ -167,24 +166,26 @@ int main(void)
     }
     HAL_Delay(100);
 
-    err = VDC_Channel_Set(app.chan_vdc, app.i2c_handle, 3.3f);
+    err = Channel_VAR_Set_Voltage(app.pwr_ctrl->chan_var, app.i2c_handle, 3.3f);
     if (err != HAL_OK) {
         printf("Error: %d\r\n", err);
     }
 
     HAL_Delay(100);
 
-    printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
+    printf("Channel_VAR:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
            "%.4fmA\r\n\n",
-           app.chan_vdc->output_enabled, app.chan_vdc->target_voltage, app.chan_vdc->cur_voltage,
-           app.chan_vdc->cur_dac_steps, app.chan_vdc->cur_current);
+           app.pwr_ctrl->chan_var->output_enabled, app.pwr_ctrl->chan_var->target_voltage,
+           app.pwr_ctrl->chan_var->cur_voltage, app.pwr_ctrl->chan_var->cur_dac_steps,
+           app.pwr_ctrl->chan_var->cur_current);
 
     HAL_Delay(1000);
 
-    printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
+    printf("Channel_VAR:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
            "%.4fmA\r\n\n",
-           app.chan_vdc->output_enabled, app.chan_vdc->target_voltage, app.chan_vdc->cur_voltage,
-           app.chan_vdc->cur_dac_steps, app.chan_vdc->cur_current);
+           app.pwr_ctrl->chan_var->output_enabled, app.pwr_ctrl->chan_var->target_voltage,
+           app.pwr_ctrl->chan_var->cur_voltage, app.pwr_ctrl->chan_var->cur_dac_steps,
+           app.pwr_ctrl->chan_var->cur_current);
 
     /* USER CODE END 2 */
 
@@ -197,7 +198,7 @@ int main(void)
         /* USER CODE BEGIN 3 */
 
         // HAL_Delay(100);
-        // err = VDC_Rotary_Poll(app.chan_vdc, app.i2c_handle);
+        // err = VDC_Rotary_Poll(app.pwr_ctrl->chan_var, app.i2c_handle);
         // if (err != 0) {
         //     printf("%s Error: %d; %s\r\n", app_ctrls[status.ctrl], status.err,
         //            app_errs[status.err]);

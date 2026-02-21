@@ -1,0 +1,4 @@
+#ifndef __DISPLAY_CONTROLLER_H__
+#define __DISPLAY_CONTROLLER_H__
+
+#endif // __DISPLAY_CONTROLLER_H__

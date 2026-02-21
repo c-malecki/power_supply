@@ -1,0 +1,4 @@
+#ifndef __STATUS_CONTROLLER_H__
+#define __STATUS_CONTROLLER_H__
+
+#endif // __STATUS_CONTROLLER_H__
