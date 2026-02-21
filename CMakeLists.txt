@@ -47,11 +47,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Middleware/SEGGER_RTT.c"
     "App/app/app.c"
-    "App/app/fdc.c"
-    "App/app/vdc.c"
+    "App/controllers/display_controller.c"
+    "App/controllers/power_controller.c"
+    "App/controllers/status_controller.c"
+    "App/controllers/temperature_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
     "App/modules/GME12864-13.c"
+    "App/tests/tests.c"
     "App/util/error.c"
     "App/util/float.c"
 )
@@ -61,7 +64,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     "Middleware"
     "App/app"
+    "App/controllers"
     "App/modules"
+    "App/tests"
     "App/util"
 )
 
