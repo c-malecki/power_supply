@@ -27,6 +27,7 @@
 #include "error.h"
 #include "app.h"
 #include "power_controller.h"
+#include "stm32f4xx_hal_def.h"
 #include <stdint.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -50,12 +51,11 @@
 
 /* USER CODE BEGIN PV */
 
-App_t app;
+static App_t app;
 App_Status_t status;
-static char *app_ctrls[3] = { "APP", "PWR", "DSP" };
+static char *app_ctrls[4] = { "App", "Display", "Power", "Temperature" };
 static char *app_errs[6] = { "OK",          "I2C Error",       "I2C Busy",
                              "I2C Timeout", "PWR Overcurrent", "PWR Overvoltage" };
-uint8_t err;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -66,41 +66,41 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     uint32_t now = HAL_GetTick();
 
     switch (GPIO_Pin) {
-    case ROT_SW_Pin:
+    case ROTARY_VAR_SW_Pin:
         if (now - last_press_rotary < 100)
             return;
         last_press_rotary = now;
-        app.pwr_ctrl->chan_var->rotary->pressed = true;
+        app.pwr_ctrl->chan_var->rotary.pressed = true;
         break;
 
-    case BTN_3V3_Pin:
+    case BUTTON_ON_OFF_3V3_Pin:
     {
         if (now - last_press_3v3 < 100)
             return;
         last_press_3v3 = now;
         bool enabled = !app.pwr_ctrl->chan_3v3->output_enabled;
-        Channel_VDC_Enable_Output(app.pwr_ctrl->chan_3v3, enabled);
+        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_3v3, enabled);
         printf("3V3 enabled = %d\r\n", enabled);
         break;
     }
 
-    case BTN_5V_Pin:
+    case BUTTON_ON_OFF_5V_Pin:
     {
         if (now - last_press_5v < 100)
             return;
         last_press_5v = now;
         bool enabled = !app.pwr_ctrl->chan_5v->output_enabled;
-        Channel_VDC_Enable_Output(app.pwr_ctrl->chan_5v, enabled);
+        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_5v, enabled);
         printf("5V enabled = %d\r\n", enabled);
         break;
     }
 
-    case BTN_VDC_Pin:
+    case BUTTON_ON_OFF_VAR_Pin:
         if (now - last_press_vdc < 100)
             return;
         last_press_vdc = now;
         bool enabled = !app.pwr_ctrl->chan_var->output_enabled;
-        Channel_VAR_Enable_Output(app.pwr_ctrl->chan_var, enabled);
+        Channel_VAR_EnableOutput(app.pwr_ctrl->chan_var, enabled);
         printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
                "%.4fmA\r\n\n",
                enabled, app.pwr_ctrl->chan_var->target_voltage, app.pwr_ctrl->chan_var->cur_voltage,
@@ -158,34 +158,21 @@ int main(void)
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
+
     HAL_Delay(100);
 
     status = App_Init(&app, &hi2c1);
     if (status.err != 0) {
-        printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
+        printf("App_Init:\n%s Error: %s\r\n\n", app_ctrls[status.ctrl], app_errs[status.err]);
     }
-    HAL_Delay(100);
-
-    err = Channel_VAR_Set_Voltage(app.pwr_ctrl->chan_var, app.i2c_handle, 3.3f);
-    if (err != HAL_OK) {
-        printf("Error: %d\r\n", err);
-    }
-
-    HAL_Delay(100);
-
-    printf("Channel_VAR:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
-           "%.4fmA\r\n\n",
-           app.pwr_ctrl->chan_var->output_enabled, app.pwr_ctrl->chan_var->target_voltage,
-           app.pwr_ctrl->chan_var->cur_voltage, app.pwr_ctrl->chan_var->cur_dac_steps,
-           app.pwr_ctrl->chan_var->cur_current);
 
     HAL_Delay(1000);
 
-    printf("Channel_VAR:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
-           "%.4fmA\r\n\n",
-           app.pwr_ctrl->chan_var->output_enabled, app.pwr_ctrl->chan_var->target_voltage,
-           app.pwr_ctrl->chan_var->cur_voltage, app.pwr_ctrl->chan_var->cur_dac_steps,
-           app.pwr_ctrl->chan_var->cur_current);
+    status = App_Dev_Test(&app);
+    if (status.err != HAL_OK) {
+        printf("App_Dev_Test:\nController %s Error: %s\r\n\n", app_ctrls[status.ctrl],
+               app_errs[status.err]);
+    }
 
     /* USER CODE END 2 */
 
@@ -202,11 +189,6 @@ int main(void)
         // if (err != 0) {
         //     printf("%s Error: %d; %s\r\n", app_ctrls[status.ctrl], status.err,
         //            app_errs[status.err]);
-        // }
-
-        // status = App_Test(&app);
-        // if (status.err != 0) {
-        //     printf("%s Error: %s\r\n", app_ctrls[status.ctrl], app_errs[status.err]);
         // }
     }
     /* USER CODE END 3 */
