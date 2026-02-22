@@ -18,14 +18,14 @@ App_Status_t Test_Channel_VAR(App_t *app)
     float base_voltage = 0.0;
     float increments[7] = { 0.0, 3.3, 1.7, 2.0, 2.0, 1.0, 2.0 };
 
-    Channel_VAR_Enable_Output(app->pwr_ctrl->chan_var, true);
+    Channel_VAR_EnableOutput(app->pwr_ctrl->chan_var, true);
 
     printf("***Test_Channel_VAR***\r\n\n");
 
     for (int i = 0; i < 7; i++) {
         base_voltage = base_voltage + increments[i];
         uint8_t err =
-            Channel_VAR_Set_Voltage(app->pwr_ctrl->chan_var, app->i2c_handle, base_voltage);
+            Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, base_voltage);
         if (err != HAL_OK) {
             status.err = err;
             return status;

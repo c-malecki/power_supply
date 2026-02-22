@@ -26,5 +26,6 @@ typedef struct
 } App_Status_t;
 
 App_Status_t App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle);
+App_Status_t App_Dev_Test(App_t *app);
 
 #endif

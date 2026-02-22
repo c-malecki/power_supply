@@ -50,22 +50,22 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VDC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VAR_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BTN_3V3_Pin BTN_5V_Pin BTN_VDC_Pin ROT_SW_Pin */
-  GPIO_InitStruct.Pin = BTN_3V3_Pin|BTN_5V_Pin|BTN_VDC_Pin|ROT_SW_Pin;
+  /*Configure GPIO pins : BUTTON_ON_OFF_3V3_Pin BUTTON_ON_OFF_5V_Pin BUTTON_ON_OFF_VAR_Pin ROTARY_VAR_SW_Pin */
+  GPIO_InitStruct.Pin = BUTTON_ON_OFF_3V3_Pin|BUTTON_ON_OFF_5V_Pin|BUTTON_ON_OFF_VAR_Pin|ROTARY_VAR_SW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ROT_CLK_Pin ROT_DT_Pin */
-  GPIO_InitStruct.Pin = ROT_CLK_Pin|ROT_DT_Pin;
+  /*Configure GPIO pins : ROTARY_VAR_CLK_Pin ROTARY_VAR_DT_Pin */
+  GPIO_InitStruct.Pin = ROTARY_VAR_CLK_Pin|ROTARY_VAR_DT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOSFET_3V3_Pin MOSFET_5V_Pin MOSFET_VDC_Pin */
-  GPIO_InitStruct.Pin = MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VDC_Pin;
+  /*Configure GPIO pins : MOSFET_3V3_Pin MOSFET_5V_Pin MOSFET_VAR_Pin */
+  GPIO_InitStruct.Pin = MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

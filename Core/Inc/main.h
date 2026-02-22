@@ -57,28 +57,28 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BTN_3V3_Pin GPIO_PIN_1
-#define BTN_3V3_GPIO_Port GPIOA
-#define BTN_3V3_EXTI_IRQn EXTI1_IRQn
-#define BTN_5V_Pin GPIO_PIN_2
-#define BTN_5V_GPIO_Port GPIOA
-#define BTN_5V_EXTI_IRQn EXTI2_IRQn
-#define BTN_VDC_Pin GPIO_PIN_3
-#define BTN_VDC_GPIO_Port GPIOA
-#define BTN_VDC_EXTI_IRQn EXTI3_IRQn
-#define ROT_CLK_Pin GPIO_PIN_4
-#define ROT_CLK_GPIO_Port GPIOA
-#define ROT_DT_Pin GPIO_PIN_5
-#define ROT_DT_GPIO_Port GPIOA
-#define ROT_SW_Pin GPIO_PIN_6
-#define ROT_SW_GPIO_Port GPIOA
-#define ROT_SW_EXTI_IRQn EXTI9_5_IRQn
+#define BUTTON_ON_OFF_3V3_Pin GPIO_PIN_1
+#define BUTTON_ON_OFF_3V3_GPIO_Port GPIOA
+#define BUTTON_ON_OFF_3V3_EXTI_IRQn EXTI1_IRQn
+#define BUTTON_ON_OFF_5V_Pin GPIO_PIN_2
+#define BUTTON_ON_OFF_5V_GPIO_Port GPIOA
+#define BUTTON_ON_OFF_5V_EXTI_IRQn EXTI2_IRQn
+#define BUTTON_ON_OFF_VAR_Pin GPIO_PIN_3
+#define BUTTON_ON_OFF_VAR_GPIO_Port GPIOA
+#define BUTTON_ON_OFF_VAR_EXTI_IRQn EXTI3_IRQn
+#define ROTARY_VAR_CLK_Pin GPIO_PIN_4
+#define ROTARY_VAR_CLK_GPIO_Port GPIOA
+#define ROTARY_VAR_DT_Pin GPIO_PIN_5
+#define ROTARY_VAR_DT_GPIO_Port GPIOA
+#define ROTARY_VAR_SW_Pin GPIO_PIN_6
+#define ROTARY_VAR_SW_GPIO_Port GPIOA
+#define ROTARY_VAR_SW_EXTI_IRQn EXTI9_5_IRQn
 #define MOSFET_3V3_Pin GPIO_PIN_8
 #define MOSFET_3V3_GPIO_Port GPIOA
 #define MOSFET_5V_Pin GPIO_PIN_9
 #define MOSFET_5V_GPIO_Port GPIOA
-#define MOSFET_VDC_Pin GPIO_PIN_10
-#define MOSFET_VDC_GPIO_Port GPIOA
+#define MOSFET_VAR_Pin GPIO_PIN_10
+#define MOSFET_VAR_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
