@@ -52,17 +52,32 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VAR_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BUTTON_ON_OFF_3V3_Pin BUTTON_ON_OFF_5V_Pin BUTTON_ON_OFF_VAR_Pin ROTARY_VAR_SW_Pin */
-  GPIO_InitStruct.Pin = BUTTON_ON_OFF_3V3_Pin|BUTTON_ON_OFF_5V_Pin|BUTTON_ON_OFF_VAR_Pin|ROTARY_VAR_SW_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LED_3V3_Pin|LED_5V_Pin|LED_VAR_Pin|LED_STATUS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : BUTTON_TOGGLE_3V3_Pin BUTTON_TOGGLE_5V_Pin BUTTON_TOGGLE_VAR_Pin ROTARY_SW_Pin */
+  GPIO_InitStruct.Pin = BUTTON_TOGGLE_3V3_Pin|BUTTON_TOGGLE_5V_Pin|BUTTON_TOGGLE_VAR_Pin|ROTARY_SW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ROTARY_VAR_CLK_Pin ROTARY_VAR_DT_Pin */
-  GPIO_InitStruct.Pin = ROTARY_VAR_CLK_Pin|ROTARY_VAR_DT_Pin;
+  /*Configure GPIO pins : ROTARY_CLK_Pin ROTARY_DT_Pin */
+  GPIO_InitStruct.Pin = ROTARY_CLK_Pin|ROTARY_DT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BUTTON_MENU_Pin */
+  GPIO_InitStruct.Pin = BUTTON_MENU_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BUTTON_MENU_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TEMP_DIGITAL_Pin */
+  GPIO_InitStruct.Pin = TEMP_DIGITAL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(TEMP_DIGITAL_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOSFET_3V3_Pin MOSFET_5V_Pin MOSFET_VAR_Pin */
   GPIO_InitStruct.Pin = MOSFET_3V3_Pin|MOSFET_5V_Pin|MOSFET_VAR_Pin;
@@ -70,6 +85,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED_3V3_Pin LED_5V_Pin LED_VAR_Pin LED_STATUS_Pin */
+  GPIO_InitStruct.Pin = LED_3V3_Pin|LED_5V_Pin|LED_VAR_Pin|LED_STATUS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);

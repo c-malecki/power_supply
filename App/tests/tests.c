@@ -9,37 +9,66 @@
 #include "MCP4725.h"
 #include "INA219.h"
 
-App_Status_t Test_Channel_VAR(App_t *app)
-{
-    // TODO: add PI loop testing
-    App_Status_t status;
-    status.ctrl = PWR_CTRL;
+void print_readings(Channel_VAR_t *chan);
 
-    float base_voltage = 0.0;
-    float increments[7] = { 0.0, 3.3, 1.7, 2.0, 2.0, 1.0, 2.0 };
+App_Status_t Test_ChannelVar(App_t *app)
+{
+    App_Status_t status;
+    status.ctrl = APP_CTRL;
+    status.err = 0;
+
+    status.err = Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, MCP_MAX_VOLTAGE);
+    if (status.err != HAL_OK) {
+        status.ctrl = PWR_CTRL;
+        return status;
+    }
 
     Channel_VAR_EnableOutput(app->pwr_ctrl->chan_var, true);
 
-    printf("***Test_Channel_VAR***\r\n\n");
+    HAL_Delay(200);
 
-    for (int i = 0; i < 7; i++) {
-        base_voltage = base_voltage + increments[i];
-        uint8_t err =
-            Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, base_voltage);
-        if (err != HAL_OK) {
-            status.err = err;
-            return status;
-        }
+    print_readings(app->pwr_ctrl->chan_var);
 
-        float voltage = app->pwr_ctrl->chan_var->cur_voltage;
-        float current = app->pwr_ctrl->chan_var->cur_current;
-        float power = voltage * current;
-
-        printf("target_v: %.4f\ncur_v: %.4fV\ncur_i: %.4fmA\ncur_p: %.4fmW\r\n\n", base_voltage,
-               voltage, current, power);
-
-        HAL_Delay(2000);
+    status.err = Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, MCP_MIN_VOLTAGE);
+    if (status.err != HAL_OK) {
+        status.ctrl = PWR_CTRL;
+        return status;
     }
 
+    HAL_Delay(200);
+
+    print_readings(app->pwr_ctrl->chan_var);
+
+    status.err = Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, MCP_MAX_VOLTAGE);
+    if (status.err != HAL_OK) {
+        status.ctrl = PWR_CTRL;
+        return status;
+    }
+
+    HAL_Delay(200);
+
+    print_readings(app->pwr_ctrl->chan_var);
+
+    status.err = Channel_VAR_SetVoltage(app->pwr_ctrl->chan_var, app->i2c_handle, MCP_MIN_VOLTAGE);
+    if (status.err != HAL_OK) {
+        status.ctrl = PWR_CTRL;
+        return status;
+    }
+
+    HAL_Delay(200);
+
+    Channel_VAR_EnableOutput(app->pwr_ctrl->chan_var, true);
+
+    print_readings(app->pwr_ctrl->chan_var);
+
     return status;
+}
+
+void print_readings(Channel_VAR_t *chan)
+{
+    HAL_Delay(200);
+    printf("Channel_VAR:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
+           "%.4fmA\r\n\n",
+           chan->output_enabled, chan->target_voltage, chan->cur_voltage, chan->cur_dac_steps,
+           chan->cur_current);
 }

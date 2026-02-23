@@ -8,6 +8,7 @@
 #define INA_VOLTR 0x02
 #define INA_CURR 0x04
 #define INA_CALR 0x05
+#define INA_MAX_CURRENT 1.0f
 
 uint8_t INA_Init(I2C_HandleTypeDef *i2c_handle);
 uint8_t INA_Read(I2C_HandleTypeDef *i2c_handle, float *voltage, float *current);

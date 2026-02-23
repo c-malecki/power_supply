@@ -3,6 +3,6 @@
 
 #include "app.h"
 
-App_Status_t Test_Channel_VAR(App_t *app);
+App_Status_t Test_ChannelVar(App_t *app);
 
 #endif // __TESTS_H__
