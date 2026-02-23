@@ -3,6 +3,7 @@
 
 #include "app.h"
 
-App_Status_t Test_ChannelVar(App_t *app);
+void Test_MainRBG(App_t *app);
+void Test_ChannelVar(App_t *app);
 
 #endif // __TESTS_H__

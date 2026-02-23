@@ -49,7 +49,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/app/app.c"
     "App/controllers/display_controller.c"
     "App/controllers/power_controller.c"
-    "App/controllers/status_controller.c"
     "App/controllers/temperature_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"

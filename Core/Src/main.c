@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "i2c.h"
+#include "stm32f4xx_hal.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -55,10 +56,6 @@
 /* USER CODE BEGIN PV */
 
 static App_t app;
-App_Status_t status;
-static char *app_ctrls[4] = { "App", "Display", "Power", "Temperature" };
-static char *app_errs[6] = { "OK",          "I2C Error",       "I2C Busy",
-                             "I2C Timeout", "PWR Overcurrent", "PWR Overvoltage" };
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -172,23 +169,14 @@ int main(void)
     MX_I2C1_Init();
     MX_ADC1_Init();
     MX_TIM3_Init();
+    MX_TIM1_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
-    HAL_Delay(100);
+    App_Init(&app, &hi2c1);
 
-    status = App_Init(&app, &hi2c1);
-    if (status.err != 0) {
-        printf("App_Init:\n%s Error: %s\r\n\n", app_ctrls[status.ctrl], app_errs[status.err]);
-    }
-
-    HAL_Delay(1000);
-
-    status = Test_ChannelVar(&app);
-    if (status.err != HAL_OK) {
-        printf("Test_ChannelVar:\nController %s Error: %s\r\n\n", app_ctrls[status.ctrl],
-               app_errs[status.err]);
-    }
+    Test_MainRBG(&app);
+    Test_ChannelVar(&app);
 
     /* USER CODE END 2 */
 
@@ -200,12 +188,7 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        // HAL_Delay(100);
-        // err = VDC_Rotary_Poll(app.pwr_ctrl->chan_var, app.i2c_handle);
-        // if (err != 0) {
-        //     printf("%s Error: %d; %s\r\n", app_ctrls[status.ctrl], status.err,
-        //            app_errs[status.err]);
-        // }
+        App_Run(&app);
     }
     /* USER CODE END 3 */
 }

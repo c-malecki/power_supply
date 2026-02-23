@@ -82,20 +82,24 @@ void Error_Handler(void);
 #define TEMP_ANALOG_GPIO_Port GPIOB
 #define TEMP_DIGITAL_Pin GPIO_PIN_10
 #define TEMP_DIGITAL_GPIO_Port GPIOB
-#define MOSFET_3V3_Pin GPIO_PIN_8
-#define MOSFET_3V3_GPIO_Port GPIOA
-#define MOSFET_5V_Pin GPIO_PIN_9
-#define MOSFET_5V_GPIO_Port GPIOA
-#define MOSFET_VAR_Pin GPIO_PIN_10
-#define MOSFET_VAR_GPIO_Port GPIOA
+#define MOSFET_3V3_Pin GPIO_PIN_13
+#define MOSFET_3V3_GPIO_Port GPIOB
+#define MOSFET_5V_Pin GPIO_PIN_14
+#define MOSFET_5V_GPIO_Port GPIOB
+#define MOSFET_VAR_Pin GPIO_PIN_15
+#define MOSFET_VAR_GPIO_Port GPIOB
+#define PWM_LED_MAIN_R_Pin GPIO_PIN_8
+#define PWM_LED_MAIN_R_GPIO_Port GPIOA
+#define PWM_LED_MAIN_G_Pin GPIO_PIN_9
+#define PWM_LED_MAIN_G_GPIO_Port GPIOA
+#define PWM_LED_MAIN_B_Pin GPIO_PIN_10
+#define PWM_LED_MAIN_B_GPIO_Port GPIOA
 #define LED_3V3_Pin GPIO_PIN_4
 #define LED_3V3_GPIO_Port GPIOB
 #define LED_5V_Pin GPIO_PIN_5
 #define LED_5V_GPIO_Port GPIOB
 #define LED_VAR_Pin GPIO_PIN_6
 #define LED_VAR_GPIO_Port GPIOB
-#define LED_STATUS_Pin GPIO_PIN_7
-#define LED_STATUS_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

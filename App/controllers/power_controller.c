@@ -105,6 +105,8 @@ uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handl
     chan->cur_dac_steps = steps;
     chan->target_voltage = target_voltage;
 
+    HAL_Delay(320);
+
     return Channel_VAR_UpdateValues(chan, i2c_handle);
 }
 
