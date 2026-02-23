@@ -8,6 +8,13 @@
 
 #define CHANNEL_VAR_VOLTAGE_TOLLERANCE 0.05f
 
+// typedef enum {
+//     CHAN_3V3 = 0,
+//     CHAN_5V,
+//     CHAN_VAR,
+//     CHAN_CT
+// } PWR_Channels;
+
 typedef struct
 {
     float target_voltage;
