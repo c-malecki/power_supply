@@ -76,6 +76,8 @@ void Error_Handler(void);
 #define BUTTON_MENU_Pin GPIO_PIN_7
 #define BUTTON_MENU_GPIO_Port GPIOA
 #define BUTTON_MENU_EXTI_IRQn EXTI9_5_IRQn
+#define PWM_FAN_Pin GPIO_PIN_0
+#define PWM_FAN_GPIO_Port GPIOB
 #define TEMP_ANALOG_Pin GPIO_PIN_1
 #define TEMP_ANALOG_GPIO_Port GPIOB
 #define TEMP_DIGITAL_Pin GPIO_PIN_10
