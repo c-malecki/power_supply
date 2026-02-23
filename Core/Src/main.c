@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "i2c.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -68,34 +69,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     uint32_t now = HAL_GetTick();
 
     switch (GPIO_Pin) {
+
     case ROTARY_SW_Pin:
         if (now - last_press_rotary < 100)
             return;
         last_press_rotary = now;
         app.pwr_ctrl->chan_var->rotary.pressed = true;
         break;
-
-    case BUTTON_TOGGLE_3V3_Pin:
-    {
-        if (now - last_press_3v3 < 100)
-            return;
-        last_press_3v3 = now;
-        bool enabled = !app.pwr_ctrl->chan_3v3->output_enabled;
-        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_3v3, enabled);
-        printf("3V3 enabled = %d\r\n", enabled);
-        break;
-    }
-
-    case BUTTON_TOGGLE_5V_Pin:
-    {
-        if (now - last_press_5v < 100)
-            return;
-        last_press_5v = now;
-        bool enabled = !app.pwr_ctrl->chan_5v->output_enabled;
-        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_5v, enabled);
-        printf("5V enabled = %d\r\n", enabled);
-        break;
-    }
 
     case BUTTON_TOGGLE_VAR_Pin:
     {
@@ -117,6 +97,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     {
         // TODO: update display to show menu
         // rotary now becomes control
+    }
+
+    case BUTTON_TOGGLE_3V3_Pin:
+    {
+        if (now - last_press_3v3 < 100)
+            return;
+        last_press_3v3 = now;
+        bool enabled = !app.pwr_ctrl->chan_3v3->output_enabled;
+        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_3v3, enabled);
+        printf("3V3 enabled = %d\r\n", enabled);
+        break;
+    }
+
+    case BUTTON_TOGGLE_5V_Pin:
+    {
+        if (now - last_press_5v < 100)
+            return;
+        last_press_5v = now;
+        bool enabled = !app.pwr_ctrl->chan_5v->output_enabled;
+        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_5v, enabled);
+        printf("5V enabled = %d\r\n", enabled);
+        break;
     }
     }
 }
@@ -169,6 +171,7 @@ int main(void)
     MX_GPIO_Init();
     MX_I2C1_Init();
     MX_ADC1_Init();
+    MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
