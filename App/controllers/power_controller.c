@@ -15,16 +15,24 @@ static Channel_VDC_t chan_3v3;
 static Channel_VDC_t chan_5v;
 static Channel_VAR_t chan_var;
 
-static uint8_t var_update_values(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
 static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
+void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg);
+void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg);
+
+const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin, LED_3V3_GPIO_Port,
+                                     LED_3V3_Pin };
+const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin, LED_5V_GPIO_Port,
+                                    LED_5V_Pin };
+const Channel_InitStruct cfg_var = { MCP_INIT_VOLTAGE, MOSFET_VAR_GPIO_Port, MOSFET_VAR_Pin,
+                                     LED_VAR_GPIO_Port, LED_VAR_Pin };
 
 // Power Controller
 
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    Channel_VDC_Init(&chan_3v3, 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin);
-    Channel_VDC_Init(&chan_5v, 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin);
-    Channel_VAR_Init(&chan_var);
+    init_vdc_chan(&chan_3v3, &cfg_3v3);
+    init_vdc_chan(&chan_5v, &cfg_5v);
+    init_var_chan(&chan_var, &cfg_var);
 
     ctrl->chan_3v3 = &chan_3v3;
     ctrl->chan_5v = &chan_5v;
@@ -33,52 +41,16 @@ uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
     return INA_Init(i2c_handle);
 }
 
-// Constant Voltage DC Channel
-
-void Channel_VDC_Init(Channel_VDC_t *chan, float target_voltage, GPIO_TypeDef *mosfet_port,
-                      uint16_t mosfet_pin)
-{
-    chan->target_voltage = target_voltage;
-    chan->mosfet_port = mosfet_port;
-    chan->mosfet_pin = mosfet_pin;
-    chan->output_enabled = false;
-}
-
 void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled)
 {
     if (enabled) {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_RESET);
     }
     chan->output_enabled = enabled;
-}
-
-// Variable Voltage DC Channel
-
-void Channel_VAR_Init(Channel_VAR_t *chan)
-{
-    chan->target_voltage = CHANNEL_VAR_MIN_VOLTAGE;
-    chan->cur_dac_steps = MCP_VoltageToSteps(CHANNEL_VAR_MIN_VOLTAGE);
-    chan->mosfet_port = MOSFET_VAR_GPIO_Port;
-    chan->mosfet_pin = MOSFET_VAR_Pin;
-    chan->output_enabled = false;
-
-    chan->rotary.clk_port = ROTARY_VAR_CLK_GPIO_Port;
-    chan->rotary.clk_pin = ROTARY_VAR_CLK_Pin;
-    chan->rotary.dt_port = ROTARY_VAR_DT_GPIO_Port;
-    chan->rotary.dt_pin = ROTARY_VAR_DT_Pin;
-    chan->rotary.sw_port = ROTARY_VAR_SW_GPIO_Port;
-    chan->rotary.sw_pin = ROTARY_VAR_SW_Pin;
-    chan->rotary.last_clk = HAL_GPIO_ReadPin(ROTARY_VAR_CLK_GPIO_Port, ROTARY_VAR_CLK_Pin);
-    chan->rotary.position = 0;
-    chan->rotary.mode = ROTARY_MODE_OFF;
-
-    chan->pid.p_gain = 50.0f;
-    chan->pid.i_gain = 5.0f;
-    chan->pid.acc_err = 0.0f;
-    chan->pid.prev_error = 0.0f;
-    chan->pid.last_time = HAL_GetTick();
 }
 
 void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled)
@@ -89,22 +61,43 @@ void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled)
     chan->pid.prev_error = 0.0f;
     chan->pid.last_time = HAL_GetTick();
 
-    chan->output_enabled = enabled;
-
     if (enabled) {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_RESET);
     }
+
+    chan->output_enabled = enabled;
+}
+
+uint8_t Channel_VAR_UpdateValues(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle)
+{
+    uint8_t err;
+    float voltage, current, power;
+
+    err = INA_Read(i2c_handle, &voltage, &current);
+    if (err != HAL_OK) {
+        return err;
+    }
+
+    power = voltage * current;
+
+    chan->cur_voltage = voltage;
+    chan->cur_current = current;
+    chan->cur_power = power;
+
+    return err;
 }
 
 uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle,
                                float target_voltage)
 {
     uint8_t err;
-    uint16_t steps;
+    uint16_t steps = MCP_VoltageToSteps(target_voltage);
 
-    err = MCP_SetSteps(i2c_handle, target_voltage, &steps);
+    err = MCP_SetSteps(i2c_handle, steps);
     if (err != HAL_OK) {
         return err;
     }
@@ -112,9 +105,7 @@ uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handl
     chan->cur_dac_steps = steps;
     chan->target_voltage = target_voltage;
 
-    HAL_Delay(200);
-
-    return var_update_values(chan, i2c_handle);
+    return Channel_VAR_UpdateValues(chan, i2c_handle);
 }
 
 // Channel VAR Rotary
@@ -180,11 +171,11 @@ uint8_t Channel_VAR_PollRotary(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handl
     if (change != 0 && chan->rotary.mode == ROTARY_MODE_ADJUST) {
         pending_voltage += change * 0.1f;
 
-        if (pending_voltage < CHANNEL_VAR_MIN_VOLTAGE) {
-            pending_voltage = CHANNEL_VAR_MIN_VOLTAGE;
+        if (pending_voltage < MCP_MIN_VOLTAGE) {
+            pending_voltage = MCP_MIN_VOLTAGE;
         }
-        if (pending_voltage > CHANNEL_VAR_MAX_VOLTAGE) {
-            pending_voltage = CHANNEL_VAR_MAX_VOLTAGE;
+        if (pending_voltage > MCP_MAX_VOLTAGE) {
+            pending_voltage = MCP_MAX_VOLTAGE;
         }
         printf("pending_voltage: %.4f\r\n", pending_voltage);
     }
@@ -197,23 +188,42 @@ uint8_t Channel_VAR_PollRotary(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handl
     return err;
 }
 
-static uint8_t var_update_values(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle)
+void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg)
 {
-    uint8_t err;
-    float voltage, current, power;
+    chan->target_voltage = cfg->target_voltage;
+    chan->mosfet_port = cfg->mosfet_port;
+    chan->mosfet_pin = cfg->mosfet_pin;
+    chan->led_port = cfg->led_port;
+    chan->led_pin = cfg->led_pin;
+    chan->output_enabled = false;
+}
 
-    err = INA_Read(i2c_handle, &voltage, &current);
-    if (err != HAL_OK) {
-        return err;
-    }
+void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg)
+{
+    chan->target_voltage = cfg->target_voltage;
+    chan->mosfet_port = cfg->mosfet_port;
+    chan->mosfet_pin = cfg->mosfet_pin;
+    chan->led_port = cfg->led_port;
+    chan->led_pin = cfg->led_pin;
 
-    power = voltage * current;
+    chan->cur_dac_steps = MCP_VoltageToSteps(cfg->target_voltage);
+    chan->output_enabled = false;
 
-    chan->cur_voltage = voltage;
-    chan->cur_current = current;
-    chan->cur_power = power;
+    chan->rotary.clk_port = ROTARY_CLK_GPIO_Port;
+    chan->rotary.clk_pin = ROTARY_CLK_Pin;
+    chan->rotary.dt_port = ROTARY_DT_GPIO_Port;
+    chan->rotary.dt_pin = ROTARY_DT_Pin;
+    chan->rotary.sw_port = ROTARY_SW_GPIO_Port;
+    chan->rotary.sw_pin = ROTARY_SW_Pin;
+    chan->rotary.last_clk = HAL_GPIO_ReadPin(ROTARY_CLK_GPIO_Port, ROTARY_CLK_Pin);
+    chan->rotary.position = 0;
+    chan->rotary.mode = ROTARY_MODE_OFF;
 
-    return err;
+    chan->pid.p_gain = 50.0f;
+    chan->pid.i_gain = 5.0f;
+    chan->pid.acc_err = 0.0f;
+    chan->pid.prev_error = 0.0f;
+    chan->pid.last_time = HAL_GetTick();
 }
 
 /*
@@ -273,7 +283,7 @@ Consider deadband to prevent oscillation:
 //         return err;
 //     }
 
-//     if (chan->cur_current > CHANNEL_VAR_MAX_CURRENT) {
+//     if (chan->cur_current > INA_MAX_CURRENT) {
 //         Channel_VAR_EnableOutput(chan, false);
 //         return 5;
 //     }

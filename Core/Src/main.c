@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "i2c.h"
 #include "gpio.h"
 
@@ -30,6 +31,7 @@
 #include "stm32f4xx_hal_def.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "tests.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,14 +68,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     uint32_t now = HAL_GetTick();
 
     switch (GPIO_Pin) {
-    case ROTARY_VAR_SW_Pin:
+    case ROTARY_SW_Pin:
         if (now - last_press_rotary < 100)
             return;
         last_press_rotary = now;
         app.pwr_ctrl->chan_var->rotary.pressed = true;
         break;
 
-    case BUTTON_ON_OFF_3V3_Pin:
+    case BUTTON_TOGGLE_3V3_Pin:
     {
         if (now - last_press_3v3 < 100)
             return;
@@ -84,7 +86,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         break;
     }
 
-    case BUTTON_ON_OFF_5V_Pin:
+    case BUTTON_TOGGLE_5V_Pin:
     {
         if (now - last_press_5v < 100)
             return;
@@ -95,17 +97,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         break;
     }
 
-    case BUTTON_ON_OFF_VAR_Pin:
+    case BUTTON_TOGGLE_VAR_Pin:
+    {
         if (now - last_press_vdc < 100)
             return;
         last_press_vdc = now;
         bool enabled = !app.pwr_ctrl->chan_var->output_enabled;
         Channel_VAR_EnableOutput(app.pwr_ctrl->chan_var, enabled);
-        printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
-               "%.4fmA\r\n\n",
-               enabled, app.pwr_ctrl->chan_var->target_voltage, app.pwr_ctrl->chan_var->cur_voltage,
-               app.pwr_ctrl->chan_var->cur_dac_steps, app.pwr_ctrl->chan_var->cur_current);
+        printf("VAR enabled = %d\r\n", enabled);
+        // printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
+        //        "%.4fmA\r\n\n",
+        //        enabled, app.pwr_ctrl->chan_var->target_voltage,
+        //        app.pwr_ctrl->chan_var->cur_voltage, app.pwr_ctrl->chan_var->cur_dac_steps,
+        //        app.pwr_ctrl->chan_var->cur_current);
         break;
+    }
+
+    case BUTTON_MENU_Pin:
+    {
+        // TODO: update display to show menu
+        // rotary now becomes control
+    }
     }
 }
 
@@ -156,6 +168,7 @@ int main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_I2C1_Init();
+    MX_ADC1_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
@@ -168,9 +181,9 @@ int main(void)
 
     HAL_Delay(1000);
 
-    status = App_Dev_Test(&app);
+    status = Test_ChannelVar(&app);
     if (status.err != HAL_OK) {
-        printf("App_Dev_Test:\nController %s Error: %s\r\n\n", app_ctrls[status.ctrl],
+        printf("Test_ChannelVar:\nController %s Error: %s\r\n\n", app_ctrls[status.ctrl],
                app_errs[status.err]);
     }
 
