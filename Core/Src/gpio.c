@@ -51,10 +51,10 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, TEMP_SENSOR_Pin|MOSFET_5V_Pin|MOSFET_3V3_Pin|MOSFET_VAR_Pin
-                          |LED_3V3_Pin|LED_5V_Pin|LED_VAR_Pin, GPIO_PIN_RESET);
+                          |LED_5V_Pin|LED_3V3_Pin|LED_VAR_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BUTTON_TOGGLE_3V3_Pin BUTTON_TOGGLE_5V_Pin BUTTON_TOGGLE_VAR_Pin ROTARY_DT_Pin */
-  GPIO_InitStruct.Pin = BUTTON_TOGGLE_3V3_Pin|BUTTON_TOGGLE_5V_Pin|BUTTON_TOGGLE_VAR_Pin|ROTARY_DT_Pin;
+  /*Configure GPIO pins : BUTTON_TOGGLE_5V_Pin BUTTON_TOGGLE_3V3_Pin BUTTON_TOGGLE_VAR_Pin ROTARY_DT_Pin */
+  GPIO_InitStruct.Pin = BUTTON_TOGGLE_5V_Pin|BUTTON_TOGGLE_3V3_Pin|BUTTON_TOGGLE_VAR_Pin|ROTARY_DT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -78,10 +78,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TEMP_SENSOR_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOSFET_5V_Pin MOSFET_3V3_Pin MOSFET_VAR_Pin LED_3V3_Pin
-                           LED_5V_Pin LED_VAR_Pin */
-  GPIO_InitStruct.Pin = MOSFET_5V_Pin|MOSFET_3V3_Pin|MOSFET_VAR_Pin|LED_3V3_Pin
-                          |LED_5V_Pin|LED_VAR_Pin;
+  /*Configure GPIO pins : MOSFET_5V_Pin MOSFET_3V3_Pin MOSFET_VAR_Pin LED_5V_Pin
+                           LED_3V3_Pin LED_VAR_Pin */
+  GPIO_InitStruct.Pin = MOSFET_5V_Pin|MOSFET_3V3_Pin|MOSFET_VAR_Pin|LED_5V_Pin
+                          |LED_3V3_Pin|LED_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

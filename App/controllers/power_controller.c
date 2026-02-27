@@ -23,8 +23,8 @@ const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin,
                                      LED_3V3_Pin };
 const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin, LED_5V_GPIO_Port,
                                     LED_5V_Pin };
-const Channel_InitStruct cfg_var = { MCP_INIT_VOLTAGE, MOSFET_VAR_GPIO_Port, MOSFET_VAR_Pin,
-                                     LED_VAR_GPIO_Port, LED_VAR_Pin };
+const Channel_InitStruct cfg_var = { 3.3f, MOSFET_VAR_GPIO_Port, MOSFET_VAR_Pin, LED_VAR_GPIO_Port,
+                                     LED_VAR_Pin };
 
 // Power Controller
 
