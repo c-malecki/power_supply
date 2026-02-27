@@ -118,33 +118,34 @@ void check_temp(App_t *app) { }
 
 void check_power(App_t *app)
 {
-    if (app->pwr_ctrl->chan_3v3->output_enabled == 1) {
-        if (!app->LED_3V3_ON)
-            HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port, app->pwr_ctrl->chan_3v3->led_pin,
-                              GPIO_PIN_SET);
-    } else {
-        HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port, app->pwr_ctrl->chan_3v3->led_pin,
-                          GPIO_PIN_RESET);
-    }
+    // if (app->pwr_ctrl->chan_3v3->output_enabled == 1) {
+    //     if (!app->LED_3V3_ON)
+    //         HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port,
+    //         app->pwr_ctrl->chan_3v3->led_pin,
+    //                           GPIO_PIN_SET);
+    // } else {
+    //     HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port, app->pwr_ctrl->chan_3v3->led_pin,
+    //                       GPIO_PIN_RESET);
+    // }
 
-    if (app->pwr_ctrl->chan_5v->output_enabled == 1) {
-        if (!app->LED_5V_ON)
-            HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
-                              GPIO_PIN_SET);
-    } else {
-        HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
-                          GPIO_PIN_RESET);
-    }
+    // if (app->pwr_ctrl->chan_5v->output_enabled == 1) {
+    //     if (!app->LED_5V_ON)
+    //         HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
+    //                           GPIO_PIN_SET);
+    // } else {
+    //     HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
+    //                       GPIO_PIN_RESET);
+    // }
 
-    if (app->pwr_ctrl->chan_var->output_enabled == 1) {
-        if (!app->LED_VAR_ON)
-            HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port, app->pwr_ctrl->chan_var->led_pin,
-                              GPIO_PIN_SET);
-        // TODO: check readings here?
-    } else {
-        HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port, app->pwr_ctrl->chan_var->led_pin,
-                          GPIO_PIN_RESET);
-    }
+    // if (app->pwr_ctrl->chan_var->output_enabled == 1) {
+    //     if (!app->LED_VAR_ON)
+    //         HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port,
+    //         app->pwr_ctrl->chan_var->led_pin,
+    //                           GPIO_PIN_SET);
+    // } else {
+    //     HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port, app->pwr_ctrl->chan_var->led_pin,
+    //                       GPIO_PIN_RESET);
+    // }
 }
 
 void ping_peripherals(App_t *app, App_Status_t *status)
@@ -169,8 +170,6 @@ void ping_peripherals(App_t *app, App_Status_t *status)
         status->prph = APP_PRPH_INA;
         return;
     }
-
-    // TODO: Can I ping the temp sensor module?
 }
 
 void init_controllers(App_t *app, App_Status_t *status)

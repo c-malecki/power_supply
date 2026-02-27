@@ -57,12 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BUTTON_TOGGLE_3V3_Pin GPIO_PIN_1
-#define BUTTON_TOGGLE_3V3_GPIO_Port GPIOA
-#define BUTTON_TOGGLE_3V3_EXTI_IRQn EXTI1_IRQn
-#define BUTTON_TOGGLE_5V_Pin GPIO_PIN_2
+#define BUTTON_TOGGLE_5V_Pin GPIO_PIN_1
 #define BUTTON_TOGGLE_5V_GPIO_Port GPIOA
-#define BUTTON_TOGGLE_5V_EXTI_IRQn EXTI2_IRQn
+#define BUTTON_TOGGLE_5V_EXTI_IRQn EXTI1_IRQn
+#define BUTTON_TOGGLE_3V3_Pin GPIO_PIN_2
+#define BUTTON_TOGGLE_3V3_GPIO_Port GPIOA
+#define BUTTON_TOGGLE_3V3_EXTI_IRQn EXTI2_IRQn
 #define BUTTON_TOGGLE_VAR_Pin GPIO_PIN_3
 #define BUTTON_TOGGLE_VAR_GPIO_Port GPIOA
 #define BUTTON_TOGGLE_VAR_EXTI_IRQn EXTI3_IRQn
@@ -92,10 +92,10 @@ void Error_Handler(void);
 #define PWM_LED_MAIN_R_GPIO_Port GPIOA
 #define PWM_LED_MAIN_B_Pin GPIO_PIN_10
 #define PWM_LED_MAIN_B_GPIO_Port GPIOA
-#define LED_3V3_Pin GPIO_PIN_4
-#define LED_3V3_GPIO_Port GPIOB
-#define LED_5V_Pin GPIO_PIN_5
+#define LED_5V_Pin GPIO_PIN_4
 #define LED_5V_GPIO_Port GPIOB
+#define LED_3V3_Pin GPIO_PIN_5
+#define LED_3V3_GPIO_Port GPIOB
 #define LED_VAR_Pin GPIO_PIN_6
 #define LED_VAR_GPIO_Port GPIOB
 
