@@ -75,13 +75,19 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     HAL_TIM_PWM_Start(&htim1, LED_RED_TIMCH);
     HAL_TIM_PWM_Start(&htim1, LED_GREEN_TIMCH);
     HAL_TIM_PWM_Start(&htim1, LED_BLUE_TIMCH);
-    App_Status_SetRGB(0, 255, 0);
+
+    HAL_Delay(200);
+
+    App_Status_SetRGB(0, 0, 255);
 
     app->state = APP_STATE_INIT_PRPH_PING;
     ping_peripherals(app, &status);
     if (status.err != APP_ERR_OK) {
         App_Status_Check(app, &status);
     }
+
+    // if all peripherals respond, switch relay to let power to the output channels
+    HAL_GPIO_WritePin(RELAY_MAIN_PWR_GPIO_Port, RELAY_MAIN_PWR_Pin, GPIO_PIN_SET);
 
     app->state = APP_STATE_INIT_CTRL_INIT;
     init_controllers(app, &status);
@@ -96,6 +102,68 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     }
 
     app->state = APP_STATE_RUN_CHECK_TEMP;
+}
+
+void ping_peripherals(App_t *app, App_Status_t *status)
+{
+    printf("ping_peripherals\r\n");
+    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, GME_I2C_ADDR, 3, 100);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_DSP;
+        status->prph = APP_PRPH_GME;
+        return;
+    }
+
+    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, MCP_I2C_ADDR, 3, 100);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_PWR;
+        status->prph = APP_PRPH_MCP;
+        return;
+    }
+
+    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, INA_I2C_ADDR, 3, 100);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_PWR;
+        status->prph = APP_PRPH_INA;
+        return;
+    }
+}
+
+void init_controllers(App_t *app, App_Status_t *status)
+{
+    printf("init_controllers\r\n");
+
+    status->err = Display_Controller_Init(&dsp_ctrl, app->i2c_handle);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_DSP;
+        return;
+    }
+    app->dsp_ctrl = &dsp_ctrl;
+
+    status->err = Power_Controller_Init(&pwr_ctrl, app->i2c_handle);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_PWR;
+        return;
+    }
+    app->pwr_ctrl = &pwr_ctrl;
+
+    status->err = Temperature_Controller_Init(&temp_ctrl);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_TEMP;
+        return;
+    }
+    app->temp_ctrl = &temp_ctrl;
+}
+
+void test_controllers(App_t *app, App_Status_t *status)
+{
+    printf("test_controllers\r\n");
+    // test display, power, temperature, status controllers
+
+    // uint8_t err = Channel_VAR_UpdateValues(app->pwr_ctrl->chan_var, app->i2c_handle);
+    // if (err != HAL_OK) {
+    //     return err;
+    // }
 }
 
 void App_Run(App_t *app)
@@ -145,63 +213,5 @@ void check_power(App_t *app)
     // } else {
     //     HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port, app->pwr_ctrl->chan_var->led_pin,
     //                       GPIO_PIN_RESET);
-    // }
-}
-
-void ping_peripherals(App_t *app, App_Status_t *status)
-{
-    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, GME_I2C_ADDR, 3, 100);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_DSP;
-        status->prph = APP_PRPH_GME;
-        return;
-    }
-
-    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, MCP_I2C_ADDR, 3, 100);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_PWR;
-        status->prph = APP_PRPH_MCP;
-        return;
-    }
-
-    status->err = (uint8_t)HAL_I2C_IsDeviceReady(app->i2c_handle, INA_I2C_ADDR, 3, 100);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_PWR;
-        status->prph = APP_PRPH_INA;
-        return;
-    }
-}
-
-void init_controllers(App_t *app, App_Status_t *status)
-{
-    status->err = Display_Controller_Init(&dsp_ctrl, app->i2c_handle);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_DSP;
-        return;
-    }
-    app->dsp_ctrl = &dsp_ctrl;
-
-    status->err = Power_Controller_Init(&pwr_ctrl, app->i2c_handle);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_PWR;
-        return;
-    }
-    app->pwr_ctrl = &pwr_ctrl;
-
-    status->err = Temperature_Controller_Init(&temp_ctrl);
-    if (status->err != APP_ERR_OK) {
-        status->ctrl = APP_CTRL_TEMP;
-        return;
-    }
-    app->temp_ctrl = &temp_ctrl;
-}
-
-void test_controllers(App_t *app, App_Status_t *status)
-{
-    // test display, power, temperature, status controllers
-
-    // uint8_t err = Channel_VAR_UpdateValues(app->pwr_ctrl->chan_var, app->i2c_handle);
-    // if (err != HAL_OK) {
-    //     return err;
     // }
 }

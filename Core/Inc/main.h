@@ -92,6 +92,8 @@ void Error_Handler(void);
 #define PWM_LED_MAIN_R_GPIO_Port GPIOA
 #define PWM_LED_MAIN_B_Pin GPIO_PIN_10
 #define PWM_LED_MAIN_B_GPIO_Port GPIOA
+#define RELAY_MAIN_PWR_Pin GPIO_PIN_11
+#define RELAY_MAIN_PWR_GPIO_Port GPIOA
 #define LED_5V_Pin GPIO_PIN_4
 #define LED_5V_GPIO_Port GPIOB
 #define LED_3V3_Pin GPIO_PIN_5
