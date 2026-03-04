@@ -9,10 +9,6 @@
 #include "power_controller.h"
 #include "temperature_controller.h"
 
-#define LED_RED_TIMCH TIM_CHANNEL_1
-#define LED_GREEN_TIMCH TIM_CHANNEL_2
-#define LED_BLUE_TIMCH TIM_CHANNEL_3
-
 typedef enum {
     APP_STATE_INIT_PRPH_PING = 0,
     APP_STATE_INIT_CTRL_INIT,
@@ -33,6 +29,7 @@ typedef enum {
     APP_PRPH_MCP,
     APP_PRPH_INA,
     APP_PRPH_GME,
+    APP_PRPH_DS18
 } App_Peripherals;
 
 typedef enum {

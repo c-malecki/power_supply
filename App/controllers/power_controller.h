@@ -20,8 +20,6 @@ typedef struct
     float target_voltage;
     GPIO_TypeDef *mosfet_port;
     uint16_t mosfet_pin;
-    GPIO_TypeDef *led_port;
-    uint16_t led_pin;
 } Channel_InitStruct;
 
 typedef struct
@@ -30,8 +28,6 @@ typedef struct
     GPIO_TypeDef *mosfet_port;
     uint16_t mosfet_pin;
     bool output_enabled;
-    uint16_t led_pin;
-    GPIO_TypeDef *led_port;
 } Channel_VDC_t;
 
 typedef struct
@@ -82,8 +78,6 @@ typedef struct
     GPIO_TypeDef *mosfet_port;
     uint16_t mosfet_pin;
     bool output_enabled;
-    uint16_t led_pin;
-    GPIO_TypeDef *led_port;
     uint16_t cur_dac_steps;
     float cur_voltage;
     float cur_current;

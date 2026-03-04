@@ -19,12 +19,9 @@ static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
 void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg);
 void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg);
 
-const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_3V3_GPIO_Port, MOSFET_3V3_Pin, LED_3V3_GPIO_Port,
-                                     LED_3V3_Pin };
-const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_5V_GPIO_Port, MOSFET_5V_Pin, LED_5V_GPIO_Port,
-                                    LED_5V_Pin };
-const Channel_InitStruct cfg_var = { 3.3f, MOSFET_VAR_GPIO_Port, MOSFET_VAR_Pin, LED_VAR_GPIO_Port,
-                                     LED_VAR_Pin };
+const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_CHAN_3V3_GPIO_Port, MOSFET_CHAN_3V3_Pin };
+const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_CHAN_5V_GPIO_Port, MOSFET_CHAN_5V_Pin };
+const Channel_InitStruct cfg_var = { 3.3f, MOSFET_CHAN_VAR_GPIO_Port, MOSFET_CHAN_VAR_Pin };
 
 // Power Controller
 
@@ -45,10 +42,8 @@ void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled)
 {
     if (enabled) {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_RESET);
     }
     chan->output_enabled = enabled;
 }
@@ -63,10 +58,8 @@ void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled)
 
     if (enabled) {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(chan->led_port, chan->led_pin, GPIO_PIN_RESET);
     }
 
     chan->output_enabled = enabled;
@@ -195,8 +188,6 @@ void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg)
     chan->target_voltage = cfg->target_voltage;
     chan->mosfet_port = cfg->mosfet_port;
     chan->mosfet_pin = cfg->mosfet_pin;
-    chan->led_port = cfg->led_port;
-    chan->led_pin = cfg->led_pin;
     chan->output_enabled = false;
 }
 
@@ -205,19 +196,17 @@ void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg)
     chan->target_voltage = cfg->target_voltage;
     chan->mosfet_port = cfg->mosfet_port;
     chan->mosfet_pin = cfg->mosfet_pin;
-    chan->led_port = cfg->led_port;
-    chan->led_pin = cfg->led_pin;
 
     chan->cur_dac_steps = MCP_VoltageToSteps(cfg->target_voltage);
     chan->output_enabled = false;
 
-    chan->rotary.clk_port = ROTARY_CLK_GPIO_Port;
-    chan->rotary.clk_pin = ROTARY_CLK_Pin;
-    chan->rotary.dt_port = ROTARY_DT_GPIO_Port;
-    chan->rotary.dt_pin = ROTARY_DT_Pin;
-    chan->rotary.sw_port = ROTARY_SW_GPIO_Port;
-    chan->rotary.sw_pin = ROTARY_SW_Pin;
-    chan->rotary.last_clk = HAL_GPIO_ReadPin(ROTARY_CLK_GPIO_Port, ROTARY_CLK_Pin);
+    chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
+    chan->rotary.clk_pin = RTRY_CLK_Pin;
+    chan->rotary.dt_port = RTRY_DT_GPIO_Port;
+    chan->rotary.dt_pin = RTRY_DT_Pin;
+    chan->rotary.sw_port = RTRY_SW_GPIO_Port;
+    chan->rotary.sw_pin = RTRY_SW_Pin;
+    chan->rotary.last_clk = HAL_GPIO_ReadPin(RTRY_CLK_GPIO_Port, RTRY_CLK_Pin);
     chan->rotary.position = 0;
     chan->rotary.mode = ROTARY_MODE_OFF;
 

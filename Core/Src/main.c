@@ -65,14 +65,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     switch (GPIO_Pin) {
 
-    case ROTARY_SW_Pin:
+    case RTRY_SW_Pin:
         if (now - last_press_rotary < 100)
             return;
         last_press_rotary = now;
         app.pwr_ctrl->chan_var->rotary.pressed = true;
         break;
 
-    case BUTTON_TOGGLE_VAR_Pin:
+    case BTN_CHAN_VAR_Pin:
     {
         if (now - last_press_vdc < 100)
             return;
@@ -88,13 +88,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         break;
     }
 
-    case BUTTON_TOGGLE_MENU_Pin:
+    case BTN_DSP_MENU_Pin:
     {
         // TODO: update display to show menu
         // rotary now becomes control
     }
 
-    case BUTTON_TOGGLE_3V3_Pin:
+    case BTN_CHAN_3V3_Pin:
     {
         if (now - last_press_3v3 < 100)
             return;
@@ -105,7 +105,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         break;
     }
 
-    case BUTTON_TOGGLE_5V_Pin:
+    case BTN_CHAN_5V_Pin:
     {
         if (now - last_press_5v < 100)
             return;
@@ -167,6 +167,10 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM3_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM4_Init();
+  MX_TIM5_Init();
+  MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
