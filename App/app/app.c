@@ -58,9 +58,9 @@ void App_Status_Check(App_t *app, App_Status_t *status)
 
 void App_Status_SetRGB(uint8_t red, uint8_t green, uint8_t blue)
 {
-    __HAL_TIM_SET_COMPARE(&htim1, LED_RED_TIMCH, red);
-    __HAL_TIM_SET_COMPARE(&htim1, LED_GREEN_TIMCH, green);
-    __HAL_TIM_SET_COMPARE(&htim1, LED_BLUE_TIMCH, blue);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, red);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, green);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, blue);
 }
 
 void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
@@ -72,11 +72,26 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     app->i2c_handle = i2c_handle;
 
     app->LED_MAIN_ON = true;
-    HAL_TIM_PWM_Start(&htim1, LED_RED_TIMCH);
-    HAL_TIM_PWM_Start(&htim1, LED_GREEN_TIMCH);
-    HAL_TIM_PWM_Start(&htim1, LED_BLUE_TIMCH);
 
-    HAL_Delay(200);
+    // main debug LED
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // TIM1_CH1 G
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2); // TIM1_CH2 R
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3); // TIM1_CH3 B
+
+    // 3V3 power channel LED
+    HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3); // TIM5_CH3
+    HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_4); // TIM5_CH4
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3); // TIM2_CH3
+
+    // 5V power channel LED
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // TIM3_CH1
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // TIM2_CH2
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // TIM2_CH1
+
+    // variable power channel LED
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // TIM4_CH2
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // TIM4_CH1
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // TIM3_CH2
 
     App_Status_SetRGB(0, 0, 255);
 
@@ -87,7 +102,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     }
 
     // if all peripherals respond, switch relay to let power to the output channels
-    HAL_GPIO_WritePin(RELAY_MAIN_PWR_GPIO_Port, RELAY_MAIN_PWR_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
 
     app->state = APP_STATE_INIT_CTRL_INIT;
     init_controllers(app, &status);
@@ -125,6 +140,13 @@ void ping_peripherals(App_t *app, App_Status_t *status)
     if (status->err != APP_ERR_OK) {
         status->ctrl = APP_CTRL_PWR;
         status->prph = APP_PRPH_INA;
+        return;
+    }
+
+    status->err = Temperature_Controller_Ping(app->temp_ctrl);
+    if (status->err != APP_ERR_OK) {
+        status->ctrl = APP_CTRL_TEMP;
+        status->prph = APP_PRPH_DS18;
         return;
     }
 }

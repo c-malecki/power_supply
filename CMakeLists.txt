@@ -53,6 +53,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
     "App/modules/GME12864-13.c"
+    "App/modules/ds18b20.c"
+    "App/modules/ow.c"
     "App/tests/tests.c"
     "App/util/error.c"
     "App/util/float.c"

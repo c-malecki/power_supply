@@ -45,78 +45,71 @@ void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, TEMP_SENSOR_Pin|MOSFET_5V_Pin|MOSFET_3V3_Pin|MOSFET_VAR_Pin
-                          |LED_5V_Pin|LED_3V3_Pin|LED_VAR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RELAY_MAIN_PWR_GPIO_Port, RELAY_MAIN_PWR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, DS18B20_S_Pin|MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BUTTON_TOGGLE_5V_Pin BUTTON_TOGGLE_3V3_Pin BUTTON_TOGGLE_VAR_Pin ROTARY_DT_Pin */
-  GPIO_InitStruct.Pin = BUTTON_TOGGLE_5V_Pin|BUTTON_TOGGLE_3V3_Pin|BUTTON_TOGGLE_VAR_Pin|ROTARY_DT_Pin;
+  /*Configure GPIO pins : BTN_CHAN_3V3_Pin BTN_CHAN_5V_Pin BTN_CHAN_VAR_Pin */
+  GPIO_InitStruct.Pin = BTN_CHAN_3V3_Pin|BTN_CHAN_5V_Pin|BTN_CHAN_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BUTTON_TOGGLE_MENU_Pin */
-  GPIO_InitStruct.Pin = BUTTON_TOGGLE_MENU_Pin;
+  /*Configure GPIO pin : RELAY_CHAN_PWR_Pin */
+  GPIO_InitStruct.Pin = RELAY_CHAN_PWR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(RELAY_CHAN_PWR_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BTN_DSP_MENU_Pin */
+  GPIO_InitStruct.Pin = BTN_DSP_MENU_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BUTTON_TOGGLE_MENU_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BTN_DSP_MENU_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ROTARY_SW_Pin ROTARY_CLK_Pin */
-  GPIO_InitStruct.Pin = ROTARY_SW_Pin|ROTARY_CLK_Pin;
+  /*Configure GPIO pins : RTRY_SW_Pin RTRY_CLK_Pin */
+  GPIO_InitStruct.Pin = RTRY_SW_Pin|RTRY_CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TEMP_SENSOR_Pin */
-  GPIO_InitStruct.Pin = TEMP_SENSOR_Pin;
+  /*Configure GPIO pin : RTRY_DT_Pin */
+  GPIO_InitStruct.Pin = RTRY_DT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(RTRY_DT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DS18B20_S_Pin */
+  GPIO_InitStruct.Pin = DS18B20_S_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(TEMP_SENSOR_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(DS18B20_S_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOSFET_5V_Pin MOSFET_3V3_Pin MOSFET_VAR_Pin */
-  GPIO_InitStruct.Pin = MOSFET_5V_Pin|MOSFET_3V3_Pin|MOSFET_VAR_Pin;
+  /*Configure GPIO pins : MOSFET_CHAN_3V3_Pin MOSFET_CHAN_5V_Pin MOSFET_CHAN_VAR_Pin */
+  GPIO_InitStruct.Pin = MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RELAY_MAIN_PWR_Pin */
-  GPIO_InitStruct.Pin = RELAY_MAIN_PWR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RELAY_MAIN_PWR_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : LED_5V_Pin LED_3V3_Pin LED_VAR_Pin */
-  GPIO_InitStruct.Pin = LED_5V_Pin|LED_3V3_Pin|LED_VAR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
