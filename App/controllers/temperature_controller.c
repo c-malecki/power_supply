@@ -20,7 +20,7 @@ void ds18_done_cb(ow_err_t err)
     }
 }
 
-uint8_t Temperature_Controller_Init(Temperature_Controller_t *ctrl)
+uint8_t Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl)
 {
     ow_init_t ow_init_struct;
     ow_init_struct.tim_handle = &htim9;
@@ -97,9 +97,4 @@ uint8_t Temperature_Controller_Read(Temperature_Controller_t *ctrl)
     temp_c[1] = ds18b20_read_c(ctrl->ds18);
 
     // ctrl->cur_temp = (float)temp_c[0] + ((float)temp_c[1] / 100.0f);
-}
-
-uint8_t Temperature_Controller_Ping(Temperature_Controller_t *ctrl)
-{
-    return ds18b20_req_read(ctrl->ds18);
 }

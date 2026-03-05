@@ -56,6 +56,7 @@ typedef struct
     Temperature_Controller_t *temp_ctrl;
     I2C_HandleTypeDef *i2c_handle;
     App_States state;
+    App_Status_t status;
     bool LED_3V3_ON;
     bool LED_5V_ON;
     bool LED_VAR_ON;
@@ -65,7 +66,7 @@ typedef struct
 
 void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle);
 void App_Run(App_t *app);
-void App_Status_Check(App_t *app, App_Status_t *status);
+void App_Status_Check(App_t *app);
 void App_Status_SetRGB(uint8_t red, uint8_t green, uint8_t blue);
 
 #endif // __APP_H__
