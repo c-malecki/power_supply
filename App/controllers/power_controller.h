@@ -40,26 +40,6 @@ typedef struct
 } Channel_VAR_PID_t;
 
 typedef enum {
-    ROTARY_MODE_OFF = 0,
-    ROTARY_MODE_ADJUST,
-    ROTARY_MODE_CONFIRM,
-} Channel_VAR_Rotary_Modes_t;
-
-typedef struct
-{
-    GPIO_TypeDef *clk_port;
-    GPIO_TypeDef *dt_port;
-    GPIO_TypeDef *sw_port;
-    uint16_t clk_pin;
-    uint16_t dt_pin;
-    uint16_t sw_pin;
-    uint8_t last_clk;
-    int32_t position;
-    bool pressed;
-    Channel_VAR_Rotary_Modes_t mode;
-} Channel_VAR_Rotary_t;
-
-typedef enum {
     IDLE,
     SETTLING,
     STABLE
@@ -82,27 +62,27 @@ typedef struct
     float cur_voltage;
     float cur_current;
     float cur_power;
-    Channel_VAR_Adjustment_State_t adjustment_state;
+    Channel_VAR_Adjustment_State_t adjustmebinnt_state;
     Channel_VAR_PID_t pid;
-    Channel_VAR_Rotary_t rotary;
 } Channel_VAR_t;
 
 typedef struct
 {
+    I2C_HandleTypeDef *i2c_handle;
     Channel_VDC_t *chan_3v3; // controlled by buck and MOSFET only
     Channel_VDC_t *chan_5v; // controlled by buck and MOSFET only
     Channel_VAR_t *chan_var; // controlled by buck, dac, current sensor, and PI loop
 } Power_Controller_t;
 
+uint8_t Power_Controller_MCP_Ping(I2C_HandleTypeDef *i2c_handle);
+uint8_t Power_Controller_INA_Ping(I2C_HandleTypeDef *i2c_handle);
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
-uint8_t Power_Controller_StartupTest(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+uint8_t Power_Controller_StartupTest(Power_Controller_t *ctrl);
 
 void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled);
 void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled);
 
-uint8_t Channel_VAR_UpdateValues(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
-uint8_t Channel_VAR_PollRotary(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
-uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle,
-                               float target_voltage);
+uint8_t Channel_VAR_UpdateValues(Power_Controller_t *ctrl, Channel_VAR_t *chan);
+uint8_t Channel_VAR_SetVoltage(Power_Controller_t *ctrl, Channel_VAR_t *chan, float target_voltage);
 
 #endif // __POWER_CONTROLLER_H__

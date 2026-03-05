@@ -16,20 +16,32 @@ static Channel_VDC_t chan_5v;
 static Channel_VAR_t chan_var;
 
 static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
-void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg);
-void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg);
+void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg,
+                   I2C_HandleTypeDef *i2c_handle);
+void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg,
+                   I2C_HandleTypeDef *i2c_handle);
 
 const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_CHAN_3V3_GPIO_Port, MOSFET_CHAN_3V3_Pin };
 const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_CHAN_5V_GPIO_Port, MOSFET_CHAN_5V_Pin };
 const Channel_InitStruct cfg_var = { 3.3f, MOSFET_CHAN_VAR_GPIO_Port, MOSFET_CHAN_VAR_Pin };
 
-// Power Controller
+uint8_t Power_Controller_MCP_Ping(I2C_HandleTypeDef *i2c_handle)
+{
+    return (uint8_t)HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDR, 3, 100);
+}
+
+uint8_t Power_Controller_INA_Ping(I2C_HandleTypeDef *i2c_handle)
+{
+    return (uint8_t)HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDR, 3, 100);
+}
 
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    init_vdc_chan(&chan_3v3, &cfg_3v3);
-    init_vdc_chan(&chan_5v, &cfg_5v);
-    init_var_chan(&chan_var, &cfg_var);
+    ctrl->i2c_handle = i2c_handle;
+
+    init_vdc_chan(&chan_3v3, &cfg_3v3, i2c_handle);
+    init_vdc_chan(&chan_5v, &cfg_5v, i2c_handle);
+    init_var_chan(&chan_var, &cfg_var, i2c_handle);
 
     ctrl->chan_3v3 = &chan_3v3;
     ctrl->chan_5v = &chan_5v;
@@ -65,12 +77,12 @@ void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled)
     chan->output_enabled = enabled;
 }
 
-uint8_t Channel_VAR_UpdateValues(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle)
+uint8_t Channel_VAR_UpdateValues(Power_Controller_t *ctrl, Channel_VAR_t *chan)
 {
     uint8_t err;
     float voltage, current, power;
 
-    err = INA_Read(i2c_handle, &voltage, &current);
+    err = INA_Read(ctrl->i2c_handle, &voltage, &current);
     if (err != HAL_OK) {
         return err;
     }
@@ -84,13 +96,12 @@ uint8_t Channel_VAR_UpdateValues(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_han
     return err;
 }
 
-uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle,
-                               float target_voltage)
+uint8_t Channel_VAR_SetVoltage(Power_Controller_t *ctrl, Channel_VAR_t *chan, float target_voltage)
 {
     uint8_t err;
     uint16_t steps = MCP_VoltageToSteps(target_voltage);
 
-    err = MCP_SetSteps(i2c_handle, steps);
+    err = MCP_SetSteps(ctrl->i2c_handle, steps);
     if (err != HAL_OK) {
         return err;
     }
@@ -100,90 +111,11 @@ uint8_t Channel_VAR_SetVoltage(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handl
 
     HAL_Delay(320);
 
-    return Channel_VAR_UpdateValues(chan, i2c_handle);
+    return Channel_VAR_UpdateValues(ctrl, chan);
 }
 
-// Channel VAR Rotary
-
-static int8_t rotary_read(Channel_VAR_Rotary_t *rotary)
-{
-    uint8_t clk = HAL_GPIO_ReadPin(rotary->clk_port, rotary->clk_pin);
-
-    if (clk != rotary->last_clk && clk == 0) {
-        uint8_t dt = HAL_GPIO_ReadPin(rotary->dt_port, rotary->dt_pin);
-
-        if (dt == 0) {
-            rotary->position++;
-            rotary->last_clk = clk;
-            return 1;
-        } else {
-            rotary->position--;
-            rotary->last_clk = clk;
-            return -1;
-        }
-    }
-
-    rotary->last_clk = clk;
-
-    return 0;
-}
-
-float pending_voltage = 0.0f;
-
-uint8_t Channel_VAR_PollRotary(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle)
-{
-    uint8_t err = 0;
-    int8_t change = rotary_read(&chan->rotary);
-
-    if (chan->rotary.pressed) {
-        chan->rotary.pressed = false;
-
-        switch (chan->rotary.mode) {
-        case ROTARY_MODE_OFF:
-            chan->rotary.mode = ROTARY_MODE_ADJUST;
-            pending_voltage = chan->cur_voltage;
-            printf("off to adjust mode\r\n");
-            break;
-
-        case ROTARY_MODE_ADJUST:
-            chan->rotary.mode = ROTARY_MODE_CONFIRM;
-            printf("adjust to confirm mode\r\n");
-            break;
-
-        case ROTARY_MODE_CONFIRM:
-            err = Channel_VAR_SetVoltage(chan, i2c_handle, pending_voltage);
-            chan->rotary.mode = ROTARY_MODE_OFF;
-            if (err != HAL_OK) {
-                return err;
-            }
-            printf("confirm to off mode\r\n");
-            break;
-        }
-    }
-
-    printf("change: %d\r\n", change);
-
-    if (change != 0 && chan->rotary.mode == ROTARY_MODE_ADJUST) {
-        pending_voltage += change * 0.1f;
-
-        if (pending_voltage < MCP_MIN_VOLTAGE) {
-            pending_voltage = MCP_MIN_VOLTAGE;
-        }
-        if (pending_voltage > MCP_MAX_VOLTAGE) {
-            pending_voltage = MCP_MAX_VOLTAGE;
-        }
-        printf("pending_voltage: %.4f\r\n", pending_voltage);
-    }
-
-    if (change != 0 && chan->rotary.mode == ROTARY_MODE_CONFIRM) {
-        chan->rotary.mode = ROTARY_MODE_ADJUST;
-        printf("confirm to adjust\r\n");
-    }
-
-    return err;
-}
-
-void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg)
+void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg,
+                   I2C_HandleTypeDef *i2c_handle)
 {
     chan->target_voltage = cfg->target_voltage;
     chan->mosfet_port = cfg->mosfet_port;
@@ -191,7 +123,8 @@ void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg)
     chan->output_enabled = false;
 }
 
-void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg)
+void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg,
+                   I2C_HandleTypeDef *i2c_handle)
 {
     chan->target_voltage = cfg->target_voltage;
     chan->mosfet_port = cfg->mosfet_port;
@@ -199,16 +132,6 @@ void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg)
 
     chan->cur_dac_steps = MCP_VoltageToSteps(cfg->target_voltage);
     chan->output_enabled = false;
-
-    chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
-    chan->rotary.clk_pin = RTRY_CLK_Pin;
-    chan->rotary.dt_port = RTRY_DT_GPIO_Port;
-    chan->rotary.dt_pin = RTRY_DT_Pin;
-    chan->rotary.sw_port = RTRY_SW_GPIO_Port;
-    chan->rotary.sw_pin = RTRY_SW_Pin;
-    chan->rotary.last_clk = HAL_GPIO_ReadPin(RTRY_CLK_GPIO_Port, RTRY_CLK_Pin);
-    chan->rotary.position = 0;
-    chan->rotary.mode = ROTARY_MODE_OFF;
 
     chan->pid.p_gain = 50.0f;
     chan->pid.i_gain = 5.0f;

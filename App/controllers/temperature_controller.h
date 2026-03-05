@@ -13,8 +13,7 @@ typedef struct
     volatile int16_t cur_temp;
 } Temperature_Controller_t;
 
-uint8_t Temperature_Controller_Init(Temperature_Controller_t *ctrl);
+uint8_t Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl);
 uint8_t Temperature_Controller_Read(Temperature_Controller_t *ctrl);
-uint8_t Temperature_Controller_Ping(Temperature_Controller_t *ctrl);
 
 #endif // __TEMPERATURE_CONTROLLER_H__
