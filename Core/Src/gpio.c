@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    gpio.c
-  * @brief   This file provides code for the configuration
-  *          of all used GPIO pins.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    gpio.c
+ * @brief   This file provides code for the configuration
+ *          of all used GPIO pins.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -51,10 +51,11 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, NC_Pin|NCA1_Pin|NCA11_Pin|NCA12_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DS18B20_S_Pin|MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|RELAY_CHAN_PWR_Pin|NCB2_Pin|DS18B20_S_Pin
+                          |MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : BTN_CHAN_3V3_Pin BTN_CHAN_5V_Pin BTN_CHAN_VAR_Pin */
   GPIO_InitStruct.Pin = BTN_CHAN_3V3_Pin|BTN_CHAN_5V_Pin|BTN_CHAN_VAR_Pin;
@@ -62,12 +63,19 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RELAY_CHAN_PWR_Pin */
-  GPIO_InitStruct.Pin = RELAY_CHAN_PWR_Pin;
+  /*Configure GPIO pin : NC_Pin */
+  GPIO_InitStruct.Pin = NC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(NC_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : NCA1_Pin NCA11_Pin NCA12_Pin */
+  GPIO_InitStruct.Pin = NCA1_Pin|NCA11_Pin|NCA12_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RELAY_CHAN_PWR_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BTN_DSP_MENU_Pin */
   GPIO_InitStruct.Pin = BTN_DSP_MENU_Pin;
@@ -87,19 +95,21 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(RTRY_DT_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : NCB0_Pin RELAY_CHAN_PWR_Pin NCB2_Pin MOSFET_CHAN_3V3_Pin
+                           MOSFET_CHAN_5V_Pin MOSFET_CHAN_VAR_Pin */
+  GPIO_InitStruct.Pin = NCB0_Pin|RELAY_CHAN_PWR_Pin|NCB2_Pin|MOSFET_CHAN_3V3_Pin
+                          |MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /*Configure GPIO pin : DS18B20_S_Pin */
   GPIO_InitStruct.Pin = DS18B20_S_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DS18B20_S_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : MOSFET_CHAN_3V3_Pin MOSFET_CHAN_5V_Pin MOSFET_CHAN_VAR_Pin */
-  GPIO_InitStruct.Pin = MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);

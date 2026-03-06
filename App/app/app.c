@@ -1,8 +1,6 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_hal_tim.h"
-#include "tim.h"
 #include <stdint.h>
 #include <stdio.h>
 //
@@ -10,12 +8,9 @@
 #include "display_controller.h"
 #include "power_controller.h"
 #include "temperature_controller.h"
+#include "input_controller.h"
 #include "INA219.h"
 #include "GME12864-13.h"
-
-static Display_Controller_t dsp_ctrl;
-static Power_Controller_t pwr_ctrl;
-static Temperature_Controller_t temp_ctrl;
 
 static char *app_states[5] = { "Ping Prphs", "Init Ctrls", "Test Ctrls", "Check Temp",
                                "Check Pwr" };
@@ -25,6 +20,7 @@ static char *app_errs[6] = { "OK",          "I2C Error",   "I2C Busy",
                              "I2C Timeout", "Overcurrent", "Overvoltage" };
 
 void ping_peripherals(App_t *app);
+void relay_enable_power(void);
 void init_controllers(App_t *app);
 void test_controllers(App_t *app);
 void check_temp(App_t *app);
@@ -41,7 +37,7 @@ void App_Status_Check(App_t *app)
 
     app->DEBUG_MODE_ON = true;
     App_Status_SetRGB(255, 0, 0);
-    printf("Error:\n\nState: %s\nController: %s\nPeripheral: %s\n Status:%s\r\n\n",
+    printf("Error:\n\nState: %s\nController: %s\nPeripheral: %s\nStatus:%s\r\n\n",
            app_states[app->state], app_ctrls[app->status.ctrl], app_prphs[app->status.prph],
            app_errs[app->status.err]);
 
@@ -102,7 +98,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     }
 
     // if all peripherals respond, switch relay to let power to the output channels
-    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
+    relay_enable_power();
 
     app->state = APP_STATE_INIT_CTRL_INIT;
     init_controllers(app);
@@ -111,24 +107,24 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     }
 
     app->state = APP_STATE_INIT_CTRL_TEST;
-    test_controllers(app);
-    if (app->status.err != APP_ERR_OK) {
-        App_Status_Check(app);
-    }
+    // test_controllers(app);
+    // if (app->status.err != APP_ERR_OK) {
+    //     App_Status_Check(app);
+    // }
 
     app->state = APP_STATE_RUN_CHECK_TEMP;
 }
 
 void ping_peripherals(App_t *app)
 {
-    printf("ping_peripherals\r\n\n");
-
+    printf("ping_peripherals: start\r\n\n");
     app->status.err = Display_Controller_GME_Ping(app->i2c_handle);
     if (app->status.err != APP_ERR_OK) {
         app->status.ctrl = APP_CTRL_DSP;
         app->status.prph = APP_PRPH_GME;
         return;
     }
+    printf("display: OK\r\n");
 
     app->status.err = Power_Controller_MCP_Ping(app->i2c_handle);
     if (app->status.err != APP_ERR_OK) {
@@ -136,6 +132,7 @@ void ping_peripherals(App_t *app)
         app->status.prph = APP_PRPH_MCP;
         return;
     }
+    printf("dac: OK\r\n");
 
     app->status.err = Power_Controller_INA_Ping(app->i2c_handle);
     if (app->status.err != APP_ERR_OK) {
@@ -143,41 +140,52 @@ void ping_peripherals(App_t *app)
         app->status.prph = APP_PRPH_INA;
         return;
     }
+    printf("current: OK\r\n");
 
     // ds18 handle needs to be initialized first before ping since it doesn't
     // use I2C like the other hardware modules
-    app->status.err = Temperature_Controller_Ping_And_Init(&temp_ctrl);
+    app->status.err = Temperature_Controller_Ping_And_Init(&app->temp_ctrl);
     if (app->status.err != APP_ERR_OK) {
         app->status.ctrl = APP_CTRL_TEMP;
         app->status.prph = APP_PRPH_DS18;
         return;
     }
+    printf("temp: OK\r\n\n");
+
+    printf("ping_peripherals: complete\r\n\n");
+    ;
+}
+
+void relay_enable_power(void)
+{
+    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
 }
 
 void init_controllers(App_t *app)
 {
-    printf("init_controllers\r\n");
-
-    app->status.err = Display_Controller_Init(&dsp_ctrl, app->i2c_handle);
+    printf("init_controllers: start\r\n\n");
+    app->status.err = Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
     if (app->status.err != APP_ERR_OK) {
         app->status.ctrl = APP_CTRL_DSP;
         return;
     }
-    app->dsp_ctrl = &dsp_ctrl;
+    printf("display: OK\r\n");
 
-    app->status.err = Power_Controller_Init(&pwr_ctrl, app->i2c_handle);
+    app->status.err = Power_Controller_Init(&app->pwr_ctrl, app->i2c_handle);
     if (app->status.err != APP_ERR_OK) {
         app->status.ctrl = APP_CTRL_PWR;
         return;
     }
-    app->pwr_ctrl = &pwr_ctrl;
+    printf("power: OK\r\n");
 
-    app->temp_ctrl = &temp_ctrl;
+    // temp is initialized in the ping test
+    printf("temperature: OK\r\n\n");
+    printf("init_controllers: complete\r\n\n");
 }
 
 void test_controllers(App_t *app)
 {
-    printf("test_controllers\r\n");
+    printf("test_controllers\r\n\n");
     // test display, power, temperature, status controllers
 
     // uint8_t err = Channel_VAR_UpdateValues(app->pwr_ctrl->chan_var, app->i2c_handle);

@@ -54,7 +54,7 @@ uint8_t Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl)
     while (ds18b20_is_busy(&ds18))
         ;
 
-    ctrl->ds18 = &ds18;
+    ctrl->ds18 = ds18;
 
     t_ctrl = ctrl;
 
@@ -65,36 +65,36 @@ uint8_t Temperature_Controller_Read(Temperature_Controller_t *ctrl)
 {
     int16_t temp_c[2];
 
-    ow_err_t err = ds18b20_cnv(ctrl->ds18);
+    ow_err_t err = ds18b20_cnv(&ctrl->ds18);
 
-    while (ds18b20_is_busy(ctrl->ds18))
+    while (ds18b20_is_busy(&ctrl->ds18))
         ;
-    while (!ds18b20_is_cnv_done(ctrl->ds18))
-        ;
-
-    if (err != 0) {
-        return err;
-    }
-
-    err = ds18b20_req_read(ctrl->ds18);
-    while (ds18b20_is_busy(ctrl->ds18))
+    while (!ds18b20_is_cnv_done(&ctrl->ds18))
         ;
 
     if (err != 0) {
         return err;
     }
 
-    temp_c[0] = ds18b20_read_c(ctrl->ds18);
-
-    err = ds18b20_req_read(ctrl->ds18);
-    while (ds18b20_is_busy(ctrl->ds18))
+    err = ds18b20_req_read(&ctrl->ds18);
+    while (ds18b20_is_busy(&ctrl->ds18))
         ;
 
     if (err != 0) {
         return err;
     }
 
-    temp_c[1] = ds18b20_read_c(ctrl->ds18);
+    temp_c[0] = ds18b20_read_c(&ctrl->ds18);
+
+    err = ds18b20_req_read(&ctrl->ds18);
+    while (ds18b20_is_busy(&ctrl->ds18))
+        ;
+
+    if (err != 0) {
+        return err;
+    }
+
+    temp_c[1] = ds18b20_read_c(&ctrl->ds18);
 
     // ctrl->cur_temp = (float)temp_c[0] + ((float)temp_c[1] / 100.0f);
 }

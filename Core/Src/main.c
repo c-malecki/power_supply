@@ -77,8 +77,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_vdc < 100)
             return;
         last_press_vdc = now;
-        bool enabled = !app.pwr_ctrl->chan_var->output_enabled;
-        Channel_VAR_EnableOutput(app.pwr_ctrl->chan_var, enabled);
+        bool enabled = !app.pwr_ctrl.chan_var.output_enabled;
+        Channel_VAR_EnableOutput(&app.pwr_ctrl.chan_var, enabled);
         printf("VAR enabled = %d\r\n", enabled);
         // printf("VDC_Channel:\nenabled %u\ntarget_v %.4fV\ncur_v %.4fV\ncur_dac_steps %u\ncur_i "
         //        "%.4fmA\r\n\n",
@@ -99,8 +99,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_3v3 < 100)
             return;
         last_press_3v3 = now;
-        bool enabled = !app.pwr_ctrl->chan_3v3->output_enabled;
-        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_3v3, enabled);
+        bool enabled = !app.pwr_ctrl.chan_3v3.output_enabled;
+        Channel_VDC_EnableOutput(&app.pwr_ctrl.chan_3v3, enabled);
         printf("3V3 enabled = %d\r\n", enabled);
         break;
     }
@@ -110,8 +110,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_5v < 100)
             return;
         last_press_5v = now;
-        bool enabled = !app.pwr_ctrl->chan_5v->output_enabled;
-        Channel_VDC_EnableOutput(app.pwr_ctrl->chan_5v, enabled);
+        bool enabled = !app.pwr_ctrl.chan_5v.output_enabled;
+        Channel_VDC_EnableOutput(&app.pwr_ctrl.chan_5v, enabled);
         printf("5V enabled = %d\r\n", enabled);
         break;
     }
@@ -173,37 +173,10 @@ int main(void)
     MX_TIM9_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
-
+    printf("APP INIT: START\r\n\n");
     App_Init(&app, &hi2c1);
-    printf("app initialized\r\n\n");
-
-    // Test_MainRBG(&app);
-    // Channel_VDC_EnableOutput(app.pwr_ctrl->chan_3v3, true);
-    // Channel_VDC_EnableOutput(app.pwr_ctrl->chan_5v, true);
-    // Channel_VAR_EnableOutput(app.pwr_ctrl->chan_var, true);
-
-    printf("enabled: 3v3 %u, 5v %u, var %u\r\n\n", app.pwr_ctrl->chan_3v3->output_enabled,
-           app.pwr_ctrl->chan_5v->output_enabled, app.pwr_ctrl->chan_var->output_enabled);
-    GPIO_PinState s3v3 =
-        HAL_GPIO_ReadPin(app.pwr_ctrl->chan_3v3->mosfet_port, app.pwr_ctrl->chan_3v3->mosfet_pin);
-    GPIO_PinState s5v =
-        HAL_GPIO_ReadPin(app.pwr_ctrl->chan_5v->mosfet_port, app.pwr_ctrl->chan_5v->mosfet_pin);
-    GPIO_PinState svar =
-        HAL_GPIO_ReadPin(app.pwr_ctrl->chan_var->mosfet_port, app.pwr_ctrl->chan_var->mosfet_pin);
-    printf("gpio: 3v3 %u, 5v %u, var %u\r\n\n", s3v3, s5v, svar);
-
-    Test_ChannelVar(&app);
-
-    printf("enabled: 3v3 %u, 5v %u, var %u\r\n\n", app.pwr_ctrl->chan_3v3->output_enabled,
-           app.pwr_ctrl->chan_5v->output_enabled, app.pwr_ctrl->chan_var->output_enabled);
-    s3v3 =
-        HAL_GPIO_ReadPin(app.pwr_ctrl->chan_3v3->mosfet_port, app.pwr_ctrl->chan_3v3->mosfet_pin);
-    s5v = HAL_GPIO_ReadPin(app.pwr_ctrl->chan_5v->mosfet_port, app.pwr_ctrl->chan_5v->mosfet_pin);
-    svar =
-        HAL_GPIO_ReadPin(app.pwr_ctrl->chan_var->mosfet_port, app.pwr_ctrl->chan_var->mosfet_pin);
-    printf("gpio: 3v3 %u, 5v %u, var %u\r\n\n", s3v3, s5v, svar);
-
-    // Channel_VAR_EnableOutput(app.pwr_ctrl->chan_var, true);
+    printf("APP INIT: COMPLETE\r\n\n");
+    Test_Print_App_State(&app);
 
     /* USER CODE END 2 */
 

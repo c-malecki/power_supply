@@ -8,6 +8,7 @@
 #include "display_controller.h"
 #include "power_controller.h"
 #include "temperature_controller.h"
+#include "input_controller.h"
 
 typedef enum {
     APP_STATE_INIT_PRPH_PING = 0,
@@ -51,9 +52,10 @@ typedef struct
 
 typedef struct
 {
-    Display_Controller_t *dsp_ctrl;
-    Power_Controller_t *pwr_ctrl;
-    Temperature_Controller_t *temp_ctrl;
+    Display_Controller_t dsp_ctrl;
+    Power_Controller_t pwr_ctrl;
+    Temperature_Controller_t temp_ctrl;
+    Input_Controller_t input_ctrl;
     I2C_HandleTypeDef *i2c_handle;
     App_States state;
     App_Status_t status;
