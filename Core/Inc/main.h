@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.h
+ * @brief          : Header for main.c file.
+ *                   This file contains the common defines of the application.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -66,8 +66,10 @@ void Error_Handler(void);
 #define BTN_CHAN_VAR_Pin GPIO_PIN_15
 #define BTN_CHAN_VAR_GPIO_Port GPIOC
 #define BTN_CHAN_VAR_EXTI_IRQn EXTI15_10_IRQn
-#define RELAY_CHAN_PWR_Pin GPIO_PIN_1
-#define RELAY_CHAN_PWR_GPIO_Port GPIOA
+#define NC_Pin GPIO_PIN_0
+#define NC_GPIO_Port GPIOA
+#define NCA1_Pin GPIO_PIN_1
+#define NCA1_GPIO_Port GPIOA
 #define PWM_CHAN_3V3_LED_B_Pin GPIO_PIN_2
 #define PWM_CHAN_3V3_LED_B_GPIO_Port GPIOA
 #define PWM_CHAN_3V3_LED_G_Pin GPIO_PIN_3
@@ -82,10 +84,16 @@ void Error_Handler(void);
 #define RTRY_DT_EXTI_IRQn EXTI9_5_IRQn
 #define RTRY_CLK_Pin GPIO_PIN_7
 #define RTRY_CLK_GPIO_Port GPIOA
-#define DS18B20_S_Pin GPIO_PIN_1
-#define DS18B20_S_GPIO_Port GPIOB
+#define NCB0_Pin GPIO_PIN_0
+#define NCB0_GPIO_Port GPIOB
+#define RELAY_CHAN_PWR_Pin GPIO_PIN_1
+#define RELAY_CHAN_PWR_GPIO_Port GPIOB
+#define NCB2_Pin GPIO_PIN_2
+#define NCB2_GPIO_Port GPIOB
 #define PWM_CHAN_3V3_LED_R_Pin GPIO_PIN_10
 #define PWM_CHAN_3V3_LED_R_GPIO_Port GPIOB
+#define DS18B20_S_Pin GPIO_PIN_12
+#define DS18B20_S_GPIO_Port GPIOB
 #define MOSFET_CHAN_3V3_Pin GPIO_PIN_13
 #define MOSFET_CHAN_3V3_GPIO_Port GPIOB
 #define MOSFET_CHAN_5V_Pin GPIO_PIN_14
@@ -98,6 +106,10 @@ void Error_Handler(void);
 #define PWM_LED_STATUS_R_GPIO_Port GPIOA
 #define PWM_LED_STATUS_B_Pin GPIO_PIN_10
 #define PWM_LED_STATUS_B_GPIO_Port GPIOA
+#define NCA11_Pin GPIO_PIN_11
+#define NCA11_GPIO_Port GPIOA
+#define NCA12_Pin GPIO_PIN_12
+#define NCA12_GPIO_Port GPIOA
 #define PWM_CHAN_5V_LED_R_Pin GPIO_PIN_15
 #define PWM_CHAN_5V_LED_R_GPIO_Port GPIOA
 #define PWM_CHAN_5V_LED_G_Pin GPIO_PIN_3

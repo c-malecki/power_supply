@@ -9,11 +9,12 @@
 
 typedef struct
 {
-    ds18b20_t *ds18;
+    ds18b20_t ds18;
     volatile int16_t cur_temp;
 } Temperature_Controller_t;
 
 uint8_t Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl);
 uint8_t Temperature_Controller_Read(Temperature_Controller_t *ctrl);
+void Temperature_Controller_State_Print(Temperature_Controller_t *ctrl);
 
 #endif // __TEMPERATURE_CONTROLLER_H__

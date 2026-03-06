@@ -50,6 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/controllers/display_controller.c"
     "App/controllers/power_controller.c"
     "App/controllers/temperature_controller.c"
+    "App/controllers/input_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
     "App/modules/GME12864-13.c"

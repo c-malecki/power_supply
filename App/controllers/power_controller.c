@@ -11,10 +11,6 @@
 #include "MCP4725.h"
 #include "INA219.h"
 
-static Channel_VDC_t chan_3v3;
-static Channel_VDC_t chan_5v;
-static Channel_VAR_t chan_var;
-
 static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
 void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg,
                    I2C_HandleTypeDef *i2c_handle);
@@ -39,15 +35,16 @@ uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
 {
     ctrl->i2c_handle = i2c_handle;
 
-    init_vdc_chan(&chan_3v3, &cfg_3v3, i2c_handle);
-    init_vdc_chan(&chan_5v, &cfg_5v, i2c_handle);
-    init_var_chan(&chan_var, &cfg_var, i2c_handle);
-
-    ctrl->chan_3v3 = &chan_3v3;
-    ctrl->chan_5v = &chan_5v;
-    ctrl->chan_var = &chan_var;
+    init_vdc_chan(&ctrl->chan_3v3, &cfg_3v3, i2c_handle);
+    init_vdc_chan(&ctrl->chan_5v, &cfg_5v, i2c_handle);
+    init_var_chan(&ctrl->chan_var, &cfg_var, i2c_handle);
 
     return INA_Init(i2c_handle);
+}
+
+void Power_Controller_State_Print(Power_Controller_t *ctrl)
+{
+    printf("POWER:\n\n3V3:\n");
 }
 
 void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled)

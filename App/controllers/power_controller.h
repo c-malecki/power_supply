@@ -69,15 +69,16 @@ typedef struct
 typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
-    Channel_VDC_t *chan_3v3; // controlled by buck and MOSFET only
-    Channel_VDC_t *chan_5v; // controlled by buck and MOSFET only
-    Channel_VAR_t *chan_var; // controlled by buck, dac, current sensor, and PI loop
+    Channel_VDC_t chan_3v3; // controlled by buck and MOSFET only
+    Channel_VDC_t chan_5v; // controlled by buck and MOSFET only
+    Channel_VAR_t chan_var; // controlled by buck, dac, current sensor, and PI loop
 } Power_Controller_t;
 
 uint8_t Power_Controller_MCP_Ping(I2C_HandleTypeDef *i2c_handle);
 uint8_t Power_Controller_INA_Ping(I2C_HandleTypeDef *i2c_handle);
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 uint8_t Power_Controller_StartupTest(Power_Controller_t *ctrl);
+void Power_Controller_State_Print(Power_Controller_t *ctrl);
 
 void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled);
 void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled);
