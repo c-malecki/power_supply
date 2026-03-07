@@ -7,7 +7,7 @@
 //
 #include "app.h"
 #include "display_controller.h"
-#include "input_controller.h"
+#include "rotary_controller.h"
 #include "led_controller.h"
 #include "power_controller.h"
 #include "temperature_controller.h"
@@ -25,6 +25,7 @@ void init_controllers(App_t *app);
 void test_controllers(App_t *app);
 void check_temp(App_t *app);
 void check_power(App_t *app);
+void check_display(App_t *app);
 
 void App_Status_Check(App_t *app)
 {
@@ -67,7 +68,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     LED_Controller_Init(&app->led_ctrl);
     LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_COLOR_YELLOW);
 
-    app->state = APP_STATE_INIT_PRPH_PING;
+    app->state = APP_STATE_PING_PERIPHERALS;
     ping_peripherals(app);
     if (app->status.error_code != ERROR_NONE) {
         App_Status_Check(app);
@@ -76,19 +77,19 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     // if all peripherals respond, switch relay to let power to the output channels
     HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
 
-    app->state = APP_STATE_INIT_CTRL_INIT;
+    app->state = APP_STATE_INIT_CONTROLLERS;
     init_controllers(app);
     if (app->status.error_code != ERROR_NONE) {
         App_Status_Check(app);
     }
 
-    app->state = APP_STATE_INIT_CTRL_TEST;
+    app->state = APP_STATE_INIT_TEST_CONTROLLERS;
     // test_controllers(app);
     // if (app->status.error_code != ERROR_NONE) {
     //     App_Status_Check(app);
     // }
 
-    app->state = APP_STATE_RUN_CHECK_TEMP;
+    app->state = APP_STATE_CHECK_TEMPERATURE;
 }
 
 void ping_peripherals(App_t *app)
@@ -143,7 +144,7 @@ void init_controllers(App_t *app)
     // temp is initialized in the ping test
     printf("temperature: OK\r\n");
 
-    Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
+    // Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
     printf("display: OK\r\n\n");
 }
 
@@ -153,21 +154,28 @@ void test_controllers(App_t *app)
     // test display, power, temperature, status controllers
 }
 
-// void App_Run(App_t *app)
-// {
-//     switch (app->state) {
+void App_Run(App_t *app)
+{
+    switch (app->state) {
 
-//     case APP_STATE_RUN_CHECK_TEMP:
-//     {
-//         check_temp(app);
-//     }
+    case APP_STATE_PING_PERIPHERALS:
+    case APP_STATE_INIT_CONTROLLERS:
+    case APP_STATE_INIT_TEST_CONTROLLERS:
+        break;
 
-//     case APP_STATE_RUN_CHECK_PWR:
-//     {
-//         check_power(app);
-//     }
-//     }
-// }
+    case APP_STATE_CHECK_TEMPERATURE:
+        check_temp(app);
+        break;
+
+    case APP_STATE_CHECK_POWER:
+        check_power(app);
+        break;
+
+    case APP_STATE_CHECK_DISPLAY:
+        check_display(app);
+        break;
+    }
+}
 
 // void check_temp(App_t *app) { }
 

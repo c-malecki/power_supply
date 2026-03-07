@@ -173,15 +173,19 @@ int main(void)
 
     App_Init(&app, &hi2c1);
 
-    Power_Controller_SetVariableVoltage_Result_t result =
-        Power_Controller_SetVariableVoltage(&app.pwr_ctrl, VOLTAGE_VARIABLE_MAX);
+    Power_Controller_SetVariableVoltage_Result_t result = Power_Controller_SetVariableVoltage(
+        &app.pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE, VOLTAGE_VARIABLE_MAX_DECIMAL);
     if (result.error != ERROR_NONE) {
-        printf("Power_Controller_SetVariableVoltage\nError: %u\nPrph: %u\r\n", result.error,
-               result.peripheral);
+        app.status.controller = CONTROLLER_POWER;
+        app.status.error_code = result.error;
+        app.status.peripheral = result.peripheral;
+        App_Status_Check(&app);
     }
     // Test_LEDs(&app);
 
     // Test_VariableChannelLevels(&app);
+
+    Test_TemperatureSensor(&app);
 
     // Test_PrintAppState(&app);
 
@@ -194,7 +198,7 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-
+        // printf("cur_temp: %d\r\n", app->temp_ctrl.cur_temp);
         // App_Run(&app);
     }
     /* USER CODE END 3 */

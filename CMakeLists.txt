@@ -49,9 +49,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/app/app.c"
     "App/common/common.c"
     "App/controllers/display_controller.c"
-    "App/controllers/input_controller.c"
     "App/controllers/led_controller.c"
     "App/controllers/power_controller.c"
+    "App/controllers/rotary_controller.c"
     "App/controllers/temperature_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
@@ -62,6 +62,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/tests/test_state.c"
     "App/tests/test_leds.c"
     "App/tests/test_power.c"
+    "App/tests/test_temperature.c"
 )
 
 # Add include paths

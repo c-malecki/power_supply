@@ -1,13 +1,17 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+//
 #include "temperature_controller.h"
 #include "ds18b20.h"
 #include "main.h"
 #include "ow.h"
 #include "common.h"
+#include "stm32f4xx_hal_gpio.h"
 
 static ds18b20_t ds18;
 static Temperature_Controller_t *t_ctrl = NULL;
+volatile bool temp_ready = false;
 
 void ds18_tim_cb(TIM_HandleTypeDef *htim)
 {
@@ -16,8 +20,15 @@ void ds18_tim_cb(TIM_HandleTypeDef *htim)
 
 void ds18_done_cb(ow_err_t err)
 {
-    if (err == OW_ERR_NONE) {
-        t_ctrl->cur_temp = ds18b20_read_c(&ds18);
+    if (err == OW_ERR_NONE && t_ctrl != NULL) {
+        int16_t new_temp = ds18b20_read_c(&ds18);
+        t_ctrl->cur_temp = new_temp;
+
+        if (new_temp >= TEMP_CRITICAL) {
+            HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_RESET);
+        }
+
+        temp_ready = true;
     }
 }
 
@@ -95,39 +106,20 @@ _Error_Codes Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl
 
 _Error_Codes Temperature_Controller_Read(Temperature_Controller_t *ctrl)
 {
-    int16_t temp_c[2];
-
     _Error_Codes error = conv_ds18_error(ds18b20_cnv(&ctrl->ds18));
-
-    while (ds18b20_is_busy(&ctrl->ds18))
-        ;
-    while (!ds18b20_is_cnv_done(&ctrl->ds18))
-        ;
-
     if (error != ERROR_NONE) {
         return error;
     }
+
+    while (ds18b20_is_busy(&ctrl->ds18)) { };
+    while (!ds18b20_is_cnv_done(&ctrl->ds18)) { };
 
     error = conv_ds18_error(ds18b20_req_read(&ctrl->ds18));
-    while (ds18b20_is_busy(&ctrl->ds18))
-        ;
-
     if (error != ERROR_NONE) {
         return error;
     }
 
-    temp_c[0] = ds18b20_read_c(&ctrl->ds18);
+    while (ds18b20_is_busy(&ctrl->ds18)) { };
 
-    error = conv_ds18_error(ds18b20_req_read(&ctrl->ds18));
-    while (ds18b20_is_busy(&ctrl->ds18))
-        ;
-
-    if (error != ERROR_NONE) {
-        return error;
-    }
-
-    temp_c[1] = ds18b20_read_c(&ctrl->ds18);
-
-    // ctrl->cur_temp = (float)temp_c[0] + ((float)temp_c[1] / 100.0f);
     return ERROR_NONE;
 }

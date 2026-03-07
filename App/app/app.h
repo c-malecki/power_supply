@@ -6,25 +6,25 @@
 #include <stdbool.h>
 //
 #include "display_controller.h"
-#include "input_controller.h"
 #include "led_controller.h"
 #include "power_controller.h"
+#include "rotary_controller.h"
 #include "temperature_controller.h"
 #include "common.h"
 
 typedef enum {
-    APP_STATE_INIT_PRPH_PING = 0,
-    APP_STATE_INIT_CTRL_INIT,
-    APP_STATE_INIT_CTRL_TEST,
-    APP_STATE_RUN_CHECK_TEMP,
-    APP_STATE_RUN_CHECK_PWR,
+    APP_STATE_PING_PERIPHERALS = 0,
+    APP_STATE_INIT_CONTROLLERS,
+    APP_STATE_INIT_TEST_CONTROLLERS,
+    APP_STATE_CHECK_TEMPERATURE,
+    APP_STATE_CHECK_POWER,
+    APP_STATE_CHECK_DISPLAY
 } App_States;
 
 extern const char *_App_State_Lookup[];
 
 typedef struct
 {
-    App_States state;
     _Controllers controller;
     _Peripherals peripheral;
     _Error_Codes error_code;
@@ -33,7 +33,7 @@ typedef struct
 typedef struct
 {
     Display_Controller_t dsp_ctrl;
-    Input_Controller_t input_ctrl;
+    Rotary_Controller_t rotary_ctrl;
     LED_Controller_t led_ctrl;
     Power_Controller_t pwr_ctrl;
     Temperature_Controller_t temp_ctrl;

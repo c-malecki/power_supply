@@ -7,14 +7,25 @@
 #include "MCP4725.h"
 #include "common.h"
 
-#define VOLTAGE_VARIABLE_MIN 2.0f
-#define VOLTAGE_VARIABLE_MAX 12.0f
+#define VOLTAGE_VARIABLE_MIN_WHOLE 2
+#define VOLTAGE_VARIABLE_MIN_DECIMAL 0
+
+#define VOLTAGE_VARIABLE_MAX_WHOLE 12
+#define VOLTAGE_VARIABLE_MAX_DECIMAL 0
+
 #define VARIABLE_VOLTAGE_TOLLERANCE 0.05f
 
-#define VOLTAGE_3V3 3.3f
-#define VOLTAGE_5V 5.0f
-#define VOLTAGE_9V 9.0f
-#define VOLTAGE_10V 10.0f
+#define VOLTAGE_3V3_WHOLE 3
+#define VOLTAGE_3V3_DECIMAL 3
+
+#define VOLTAGE_5V_WHOLE 5
+#define VOLTAGE_5V_DECIMAL 0
+
+#define VOLTAGE_9V_WHOLE 9
+#define VOLTAGE_9V_DECIMAL 0
+
+#define VOLTAGE_10V_WHOLE 10
+#define VOLTAGE_10V_DECIMAL 0
 
 typedef enum {
     POWER_CHANNEL_3V3 = 0,
@@ -54,7 +65,8 @@ typedef struct
     bool output_enabled;
     Power_Channel_Types channel_type;
     uint16_t mosfet_pin;
-    float target_voltage;
+    int32_t target_voltage_whole;
+    uint32_t target_voltage_decimal;
     GPIO_TypeDef *mosfet_port;
 
     union {
@@ -62,9 +74,11 @@ typedef struct
         {
             Channel_VAR_Adjustment_State_t adjustment_state;
             uint16_t cur_dac_steps;
-            float cur_voltage;
-            float cur_current;
-            float cur_power;
+            int32_t cur_voltage_whole;
+            uint32_t cur_voltage_decimal;
+            int32_t cur_current_whole;
+            uint32_t cur_current_decimal;
+            // float cur_power;
             Channel_VAR_PID_t pid;
         } variable;
     };
@@ -92,7 +106,8 @@ Power_Controller_Ping_Result_t Power_Controller_PingPeripherals(I2C_HandleTypeDe
 _Error_Codes Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
 Power_Controller_SetVariableVoltage_Result_t
-Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage);
+Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
+                                    uint32_t target_voltage_decimal);
 void Power_Controller_PrintState(Power_Controller_t *ctrl);
 
 #endif // __POWER_CONTROLLER_H__
