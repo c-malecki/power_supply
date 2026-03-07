@@ -37,7 +37,7 @@ void App_Status_Check(App_t *app)
     printf("***ENTERING DEBUG MODE***:\r\n\n");
 
     app->DEBUG_MODE_ON = true;
-    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_RED);
+    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_COLOR_RED);
 
     printf("Error:\n\nState: %s\nController: %s\nPeripheral: %s\nStatus:%s\r\n\n",
            app_states[app->state], app_ctrls[app->status.ctrl], app_prphs[app->status.prph],
@@ -65,7 +65,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     app->i2c_handle = i2c_handle;
 
     LED_Controller_Init(&app->led_ctrl);
-    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_YELLOW);
+    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_COLOR_YELLOW);
 
     app->state = APP_STATE_INIT_PRPH_PING;
     ping_peripherals(app);

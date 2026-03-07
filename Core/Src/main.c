@@ -56,56 +56,59 @@ static App_t app;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    static uint32_t last_press_rotary = 0;
+    // static uint32_t last_press_rotary = 0;
     static uint32_t last_press_3v3 = 0;
     static uint32_t last_press_5v = 0;
-    static uint32_t last_press_vdc = 0;
+    static uint32_t last_press_var = 0;
     uint32_t now = HAL_GetTick();
 
     switch (GPIO_Pin) {
 
-        // case RTRY_SW_Pin:
-        //     if (now - last_press_rotary < 100)
-        //         return;
-        //     last_press_rotary = now;
-        //     app.pwr_ctrl->chan_var->rotary.pressed = true;
-        //     break;
-
     case BTN_CHAN_VAR_Pin:
     {
-        if (now - last_press_vdc < 100)
+        if (now - last_press_var < 50)
             return;
-        last_press_vdc = now;
-        // bool enabled = !app.pwr_ctrl.chan_var.output_enabled;
-
-        break;
-    }
-
-    case BTN_DSP_MENU_Pin:
-    {
-        // TODO: update display to show menu
-        // rotary now becomes control
-    }
-
-    case BTN_CHAN_3V3_Pin:
-    {
-        if (now - last_press_3v3 < 100)
-            return;
-        last_press_3v3 = now;
-        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_3V3].output_enabled;
-        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_3V3, enabled);
+        last_press_var = now;
+        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_VARIABLE].output_enabled;
+        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_VARIABLE, enabled);
+        printf("BTN_CHAN_VAR: %u\r\n\n", enabled);
         break;
     }
 
     case BTN_CHAN_5V_Pin:
     {
-        if (now - last_press_5v < 100)
+        if (now - last_press_5v < 50)
             return;
         last_press_5v = now;
         bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_5V].output_enabled;
         Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_5V, enabled);
+        printf("BTN_CHAN_5V: %u\r\n\n", enabled);
         break;
     }
+
+    case BTN_CHAN_3V3_Pin:
+    {
+        if (now - last_press_3v3 < 50)
+            return;
+        last_press_3v3 = now;
+        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_3V3].output_enabled;
+        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_3V3, enabled);
+        printf("BTN_CHAN_3V3: %u\r\n\n", enabled);
+        break;
+    }
+
+        // case RTRY_SW_Pin:
+        //     if (now - last_press_rotary < 50)
+        //         return;
+        //     last_press_rotary = now;
+        //     app.pwr_ctrl->chan_var->rotary.pressed = true;
+        //     break;
+
+        // case BTN_DSP_MENU_Pin:
+        // {
+        // TODO: update display to show menu
+        // rotary now becomes control
+        // }
     }
 }
 
@@ -167,11 +170,11 @@ int main(void)
 
     App_Init(&app, &hi2c1);
 
-    Test_LEDs(&app);
+    // Test_LEDs(&app);
 
-    Test_VariableChannelLevels(&app);
+    // Test_VariableChannelLevels(&app);
 
-    Test_PrintAppState(&app);
+    // Test_PrintAppState(&app);
 
     /* USER CODE END 2 */
 

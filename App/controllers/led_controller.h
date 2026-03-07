@@ -11,10 +11,10 @@ typedef struct
     uint8_t blue;
 } Input_LED_Color_t;
 
-extern const Input_LED_Color_t LED_RED;
-extern const Input_LED_Color_t LED_GREEN;
-extern const Input_LED_Color_t LED_BLUE;
-extern const Input_LED_Color_t LED_YELLOW;
+extern const Input_LED_Color_t LED_COLOR_RED;
+extern const Input_LED_Color_t LED_COLOR_GREEN;
+extern const Input_LED_Color_t LED_COLOR_BLUE;
+extern const Input_LED_Color_t LED_COLOR_YELLOW;
 extern const Input_LED_Color_t LED_OFF;
 
 /*
