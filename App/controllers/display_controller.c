@@ -1,12 +1,13 @@
-#include "stm32f4xx_hal.h"
+#include "stm32f411xe.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "display_controller.h"
 #include "GME12864-13.h"
+#include "tim.h"
 
-uint8_t Display_Controller_GME_Ping(I2C_HandleTypeDef *i2c_handle)
+uint8_t Display_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
 {
-    return (uint8_t)HAL_I2C_IsDeviceReady(i2c_handle, GME_I2C_ADDR, 3, 100);
+    return HAL_I2C_IsDeviceReady(i2c_handle, GME_I2C_ADDR, 3, 100);
 }
 
 uint8_t Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)

@@ -48,17 +48,16 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Middleware/SEGGER_RTT.c"
     "App/app/app.c"
     "App/controllers/display_controller.c"
+    "App/controllers/input_controller.c"
+    "App/controllers/led_controller.c"
     "App/controllers/power_controller.c"
     "App/controllers/temperature_controller.c"
-    "App/controllers/input_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
     "App/modules/GME12864-13.c"
     "App/modules/ds18b20.c"
     "App/modules/ow.c"
     "App/tests/tests.c"
-    "App/util/error.c"
-    "App/util/float.c"
 )
 
 # Add include paths
@@ -69,7 +68,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "App/controllers"
     "App/modules"
     "App/tests"
-    "App/util"
 )
 
 # Add project symbols (macros)

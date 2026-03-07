@@ -2,16 +2,12 @@
 #define __INPUT_CONTROLLER_H__
 
 #include "stm32f4xx_hal.h"
+#include <stdbool.h>
 
 typedef enum {
-    DISPLAY_VAR_CHAN = 0,
-    DISPLAY_MENU_OPTS
+    DISPLAY_VARIABLE_CHANNEL = 0,
+    DISPLAY_MENU_OPTIONS
 } Input_Rotary_Modes;
-
-typedef enum {
-    OFF = 0,
-    ON
-} Input_Button_States;
 
 typedef struct
 {
@@ -29,9 +25,6 @@ typedef struct
 
 typedef struct
 {
-    Input_Button_States chan_3v3;
-    Input_Button_States chan_5v;
-    Input_Button_States chan_var;
     Input_Rotary_t rotary;
 } Input_Controller_t;
 
