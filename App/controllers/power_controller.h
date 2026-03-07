@@ -6,35 +6,26 @@
 #include <stdbool.h>
 #include "MCP4725.h"
 
-#define CHANNEL_VAR_VOLTAGE_TOLLERANCE 0.05f
+#define VOLTAGE_VARIABLE_MIN 2.0f
+#define VOLTAGE_VARIABLE_MAX 12.0f
+#define VARIABLE_VOLTAGE_TOLLERANCE 0.05f
 
-// typedef enum {
-//     CHAN_3V3 = 0,
-//     CHAN_5V,
-//     CHAN_VAR,
-//     CHAN_CT
-// } PWR_Channels;
+#define VOLTAGE_3V3 3.3f
+#define VOLTAGE_5V 5.0f
+#define VOLTAGE_9V 9.0f
+#define VOLTAGE_10V 10.0f
 
-typedef struct
-{
-    float target_voltage;
-    GPIO_TypeDef *mosfet_port;
-    uint16_t mosfet_pin;
-} Channel_InitStruct;
-
-typedef struct
-{
-    float target_voltage;
-    GPIO_TypeDef *mosfet_port;
-    uint16_t mosfet_pin;
-    bool output_enabled;
-} Channel_VDC_t;
+typedef enum {
+    POWER_CHANNEL_3V3 = 0,
+    POWER_CHANNEL_5V,
+    POWER_CHANNEL_VARIABLE
+} Power_Channels;
 
 typedef struct
 {
     float p_gain;
     float i_gain;
-    float acc_err;
+    float acc_error;
     float prev_error;
     uint32_t last_time;
 } Channel_VAR_PID_t;
@@ -52,38 +43,48 @@ typedef struct
     uint16_t delay_ms;
 } Channel_VAR_Adjustment_State_t;
 
+typedef enum {
+    CHANNEL_TYPE_FIXED = 0,
+    CHANNEL_TYPE_VARIABLE,
+} Power_Channel_Types;
+
 typedef struct
 {
+    bool output_enabled;
+    Power_Channel_Types channel_type;
+    uint16_t mosfet_pin;
     float target_voltage;
     GPIO_TypeDef *mosfet_port;
-    uint16_t mosfet_pin;
-    bool output_enabled;
-    uint16_t cur_dac_steps;
-    float cur_voltage;
-    float cur_current;
-    float cur_power;
-    Channel_VAR_Adjustment_State_t adjustmebinnt_state;
-    Channel_VAR_PID_t pid;
-} Channel_VAR_t;
+
+    union {
+        struct
+        {
+            Channel_VAR_Adjustment_State_t adjustment_state;
+            uint16_t cur_dac_steps;
+            float cur_voltage;
+            float cur_current;
+            float cur_power;
+            Channel_VAR_PID_t pid;
+        } variable;
+    };
+} Power_Controller_Channel_t;
 
 typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
-    Channel_VDC_t chan_3v3; // controlled by buck and MOSFET only
-    Channel_VDC_t chan_5v; // controlled by buck and MOSFET only
-    Channel_VAR_t chan_var; // controlled by buck, dac, current sensor, and PI loop
+    Power_Controller_Channel_t channels[3];
 } Power_Controller_t;
 
-uint8_t Power_Controller_MCP_Ping(I2C_HandleTypeDef *i2c_handle);
-uint8_t Power_Controller_INA_Ping(I2C_HandleTypeDef *i2c_handle);
+typedef struct
+{
+    uint8_t mcp;
+    uint8_t ina;
+} Power_Controller_Ping_Result_t;
+
+Power_Controller_Ping_Result_t Power_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle);
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
-uint8_t Power_Controller_StartupTest(Power_Controller_t *ctrl);
-void Power_Controller_State_Print(Power_Controller_t *ctrl);
-
-void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled);
-void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled);
-
-uint8_t Channel_VAR_UpdateValues(Power_Controller_t *ctrl, Channel_VAR_t *chan);
-uint8_t Channel_VAR_SetVoltage(Power_Controller_t *ctrl, Channel_VAR_t *chan, float target_voltage);
+void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
+uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage);
+void Power_Controller_PrintState(Power_Controller_t *ctrl);
 
 #endif // __POWER_CONTROLLER_H__

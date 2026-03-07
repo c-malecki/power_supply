@@ -1,0 +1,68 @@
+#ifndef __LED_CONTROLLER_H__
+#define __LED_CONTROLLER_H__
+
+#include "stm32f4xx_hal.h"
+#include <stdint.h>
+
+typedef struct
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} Input_LED_Color_t;
+
+extern const Input_LED_Color_t LED_RED;
+extern const Input_LED_Color_t LED_GREEN;
+extern const Input_LED_Color_t LED_BLUE;
+extern const Input_LED_Color_t LED_YELLOW;
+extern const Input_LED_Color_t LED_OFF;
+
+/*
+    main debug led
+        red TIM1_CH2
+        green TIM1_CH1
+        blue TIM1_CH3
+
+    3V3 power channel LED
+        red TIM2_CH3
+        green TIM5_CH4
+        blue TIM5_CH3
+
+    5V power channel LED
+        red TIM2_CH1
+        green TIM2_CH2
+        blue TIM3_CH1
+
+    variable power channel LED
+        red TIM3_CH2
+        green TIM4_CH1
+        blue TIM4_CH2
+*/
+
+typedef struct
+{
+    uint32_t r_timch;
+    uint32_t g_timch;
+    uint32_t b_timch;
+    TIM_HandleTypeDef *r_htim;
+    TIM_HandleTypeDef *g_htim;
+    TIM_HandleTypeDef *b_htim;
+} Input_LED_t;
+
+typedef enum {
+    LED_STATUS = 0,
+    LED_3V3,
+    LED_5V,
+    LED_VAR,
+    LED_COUNT
+} Input_LEDs;
+
+typedef struct
+{
+    Input_LED_t leds[4];
+} LED_Controller_t;
+
+void LED_Controller_Init(LED_Controller_t *ctrl);
+void LED_Controller_SetLED(LED_Controller_t *ctrl, Input_LEDs led, Input_LED_Color_t color);
+
+#endif // __LED_CONTROLLER_H__

@@ -11,131 +11,138 @@
 #include "MCP4725.h"
 #include "INA219.h"
 
-static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
-void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg,
-                   I2C_HandleTypeDef *i2c_handle);
-void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg,
-                   I2C_HandleTypeDef *i2c_handle);
+static const Power_Controller_Channel_t channel_3v3_default = {
+    .channel_type = CHANNEL_TYPE_FIXED,
+    .mosfet_pin = MOSFET_CHAN_3V3_Pin,
+    .mosfet_port = MOSFET_CHAN_3V3_GPIO_Port,
+    .output_enabled = false,
+    .target_voltage = VOLTAGE_3V3,
+};
 
-const Channel_InitStruct cfg_3v3 = { 3.3f, MOSFET_CHAN_3V3_GPIO_Port, MOSFET_CHAN_3V3_Pin };
-const Channel_InitStruct cfg_5v = { 5.0f, MOSFET_CHAN_5V_GPIO_Port, MOSFET_CHAN_5V_Pin };
-const Channel_InitStruct cfg_var = { 3.3f, MOSFET_CHAN_VAR_GPIO_Port, MOSFET_CHAN_VAR_Pin };
+static const Power_Controller_Channel_t channel_5v_default = {
+    .channel_type = CHANNEL_TYPE_FIXED,
+    .mosfet_pin = MOSFET_CHAN_5V_Pin,
+    .mosfet_port = MOSFET_CHAN_5V_GPIO_Port,
+    .output_enabled = false,
+    .target_voltage = VOLTAGE_5V,
+};
 
-uint8_t Power_Controller_MCP_Ping(I2C_HandleTypeDef *i2c_handle)
+static const Power_Controller_Channel_t channel_var_default = {
+     .output_enabled = false,
+    .channel_type = CHANNEL_TYPE_VARIABLE,
+    .mosfet_pin = MOSFET_CHAN_VAR_Pin,
+    .target_voltage = VOLTAGE_VARIABLE_MIN,
+    .mosfet_port = MOSFET_CHAN_VAR_GPIO_Port,
+    .variable = {
+        .adjustment_state = {0},
+        .cur_dac_steps = 0,
+        .cur_voltage = 0.0f,
+        .cur_current = 0.0f,
+        .cur_power = 0.0f,
+        .pid = {
+            .p_gain = 0.0f,
+            .i_gain = 0.0f,
+            .acc_error = 0.0f,
+            .prev_error = 0.0f,
+            .last_time = 0,
+        },
+    }
+};
+
+Power_Controller_Ping_Result_t Power_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
 {
-    return (uint8_t)HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDR, 3, 100);
-}
+    Power_Controller_Ping_Result_t result = { .mcp = 0, .ina = 0 };
 
-uint8_t Power_Controller_INA_Ping(I2C_HandleTypeDef *i2c_handle)
-{
-    return (uint8_t)HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDR, 3, 100);
+    uint8_t err = HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100);
+    if (err != HAL_OK) {
+        result.mcp = 1;
+    }
+
+    err = HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100);
+    if (err != HAL_OK) {
+        result.ina = 1;
+    }
+
+    return result;
 }
 
 uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
     ctrl->i2c_handle = i2c_handle;
-
-    init_vdc_chan(&ctrl->chan_3v3, &cfg_3v3, i2c_handle);
-    init_vdc_chan(&ctrl->chan_5v, &cfg_5v, i2c_handle);
-    init_var_chan(&ctrl->chan_var, &cfg_var, i2c_handle);
+    ctrl->channels[POWER_CHANNEL_3V3] = channel_3v3_default;
+    ctrl->channels[POWER_CHANNEL_5V] = channel_5v_default;
+    ctrl->channels[POWER_CHANNEL_VARIABLE] = channel_var_default;
 
     return INA_Init(i2c_handle);
 }
 
-void Power_Controller_State_Print(Power_Controller_t *ctrl)
+uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage)
 {
-    printf("POWER:\n\n3V3:\n");
-}
+    Power_Controller_Channel_t chan = ctrl->channels[POWER_CHANNEL_VARIABLE];
 
-void Channel_VDC_EnableOutput(Channel_VDC_t *chan, bool enabled)
-{
-    if (enabled) {
-        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
-    } else {
-        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
-    }
-    chan->output_enabled = enabled;
-}
-
-void Channel_VAR_EnableOutput(Channel_VAR_t *chan, bool enabled)
-{
-    chan->pid.p_gain = 50.0f;
-    chan->pid.i_gain = 5.0f;
-    chan->pid.acc_err = 0.0f;
-    chan->pid.prev_error = 0.0f;
-    chan->pid.last_time = HAL_GetTick();
-
-    if (enabled) {
-        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_SET);
-    } else {
-        HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, GPIO_PIN_RESET);
+    if (target_voltage < VOLTAGE_VARIABLE_MIN) {
+        target_voltage = VOLTAGE_VARIABLE_MIN;
     }
 
-    chan->output_enabled = enabled;
-}
+    if (target_voltage > VOLTAGE_VARIABLE_MAX) {
+        target_voltage = VOLTAGE_VARIABLE_MAX;
+    }
 
-uint8_t Channel_VAR_UpdateValues(Power_Controller_t *ctrl, Channel_VAR_t *chan)
-{
-    uint8_t err;
-    float voltage, current, power;
+    uint16_t steps = MCP_VoltageToSteps(target_voltage);
 
-    err = INA_Read(ctrl->i2c_handle, &voltage, &current);
+    uint8_t err = MCP_SetSteps(ctrl->i2c_handle, steps);
     if (err != HAL_OK) {
         return err;
     }
 
-    power = voltage * current;
+    chan.target_voltage = target_voltage;
+    chan.variable.cur_dac_steps = steps;
 
-    chan->cur_voltage = voltage;
-    chan->cur_current = current;
-    chan->cur_power = power;
+    // this is to give enough time for the voltage to rise/fall
+    // TODO: retest time it takes after redoing routing
+    // TODO: retest when everything is working and load is connected
+    HAL_Delay(350);
+
+    INA_Read_Result_t ina_res = INA_Read(ctrl->i2c_handle);
+    if (ina_res.error != HAL_OK) {
+        return ina_res.error;
+    }
+
+    chan.variable.cur_voltage = ina_res.voltage;
+    chan.variable.cur_current = ina_res.current;
+    chan.variable.cur_power = ina_res.power;
+
+    ctrl->channels[POWER_CHANNEL_VARIABLE] = chan;
 
     return err;
 }
 
-uint8_t Channel_VAR_SetVoltage(Power_Controller_t *ctrl, Channel_VAR_t *chan, float target_voltage)
+void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels channel, bool enabled)
 {
-    uint8_t err;
-    uint16_t steps = MCP_VoltageToSteps(target_voltage);
+    Power_Controller_Channel_t chan = ctrl->channels[channel];
 
-    err = MCP_SetSteps(ctrl->i2c_handle, steps);
-    if (err != HAL_OK) {
-        return err;
+    HAL_GPIO_WritePin(chan.mosfet_port, chan.mosfet_pin, enabled ? 1 : 0);
+
+    if (chan.channel_type == CHANNEL_TYPE_VARIABLE) {
+        chan.variable.pid.p_gain = 50.0f;
+        chan.variable.pid.i_gain = 5.0f;
+        chan.variable.pid.acc_error = 0.0f;
+        chan.variable.pid.prev_error = 0.0f;
+        chan.variable.pid.last_time = HAL_GetTick();
+        // TODO: start pid
+        if (!enabled) {
+            Power_Controller_SetVariableVoltage(ctrl, VOLTAGE_VARIABLE_MIN);
+        } else {
+            Power_Controller_SetVariableVoltage(ctrl, chan.target_voltage);
+        }
     }
 
-    chan->cur_dac_steps = steps;
-    chan->target_voltage = target_voltage;
+    chan.output_enabled = enabled;
 
-    HAL_Delay(320);
-
-    return Channel_VAR_UpdateValues(ctrl, chan);
+    ctrl->channels[channel] = chan;
 }
 
-void init_vdc_chan(Channel_VDC_t *chan, const Channel_InitStruct *cfg,
-                   I2C_HandleTypeDef *i2c_handle)
-{
-    chan->target_voltage = cfg->target_voltage;
-    chan->mosfet_port = cfg->mosfet_port;
-    chan->mosfet_pin = cfg->mosfet_pin;
-    chan->output_enabled = false;
-}
-
-void init_var_chan(Channel_VAR_t *chan, const Channel_InitStruct *cfg,
-                   I2C_HandleTypeDef *i2c_handle)
-{
-    chan->target_voltage = cfg->target_voltage;
-    chan->mosfet_port = cfg->mosfet_port;
-    chan->mosfet_pin = cfg->mosfet_pin;
-
-    chan->cur_dac_steps = MCP_VoltageToSteps(cfg->target_voltage);
-    chan->output_enabled = false;
-
-    chan->pid.p_gain = 50.0f;
-    chan->pid.i_gain = 5.0f;
-    chan->pid.acc_err = 0.0f;
-    chan->pid.prev_error = 0.0f;
-    chan->pid.last_time = HAL_GetTick();
-}
+// static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
 
 /*
 Your DAC is inverted (lower DAC = higher voltage). If error is positive (need more voltage), you
@@ -194,7 +201,7 @@ Consider deadband to prevent oscillation:
 //         return err;
 //     }
 
-//     if (chan->cur_current > INA_MAX_CURRENT) {
+//     if (chan->cur_current > INA_CURRENT_TRESHOLD) {
 //         Channel_VAR_EnableOutput(chan, false);
 //         return 5;
 //     }
