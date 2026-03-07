@@ -23,7 +23,10 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
     ssd1306_UpdateScreen();
 }
 
-void Display_Controller_ShowVariableChannel(float voltage, float current) { }
+void Display_Controller_ShowVariableChannel(int32_t voltage_whole, uint32_t voltage_decimal,
+                                            int32_t current_whole, uint32_t current_decimal)
+{
+}
 
 // chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
 // chan->rotary.clk_pin = RTRY_CLK_Pin;

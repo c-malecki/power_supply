@@ -15,9 +15,10 @@
 typedef struct
 {
     _Error_Codes error;
-    float voltage;
-    float current;
-    float power;
+    int32_t voltage_whole;
+    uint32_t voltage_decimal;
+    int32_t current_whole;
+    uint32_t current_decimal;
 } INA_Read_Result_t;
 
 _Error_Codes INA_Init(I2C_HandleTypeDef *i2c_handle);

@@ -1,6 +1,5 @@
 #include "MCP4725.h"
 #include "stm32f4xx_hal_def.h"
-#include "float.h"
 #include "stdint.h"
 #include <math.h>
 #include <limits.h>
@@ -24,16 +23,19 @@ uint16_t float_to_uint16(float value)
     return (uint16_t)rounded_f;
 }
 
-uint16_t voltage_to_steps(float target_voltage)
+uint16_t voltage_to_steps(int32_t target_voltage_whole, uint32_t target_voltage_decimal)
 {
-    return (uint16_t)float_to_uint16((12.0f - target_voltage) / MCP_STEP_VOLTAGE);
+    int32_t mV = (target_voltage_whole * 1000) + target_voltage_decimal;
+    int32_t uV = (MCP_MAX_mV - mV) * 1000;
+    return (uint16_t)(uV / MCP_STEP_uV);
 }
 
-MCP_SetSteps_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, float target_voltage)
+MCP_SetSteps_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, int32_t target_voltage_whole,
+                                   uint32_t target_voltage_decimal)
 {
     MCP_SetSteps_Result_t result;
 
-    uint16_t steps = voltage_to_steps(target_voltage);
+    uint16_t steps = voltage_to_steps(target_voltage_whole, target_voltage_decimal);
 
     uint8_t pData[2];
 
@@ -45,8 +47,3 @@ MCP_SetSteps_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, float target_volta
 
     return result;
 }
-
-// float steps_to_voltage(uint16_t steps)
-// {
-//     return steps * MCP_STEP_VOLTAGE;
-// }

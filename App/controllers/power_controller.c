@@ -16,7 +16,8 @@ static const Power_Controller_Channel_t channel_3v3_default = {
     .mosfet_pin = MOSFET_CHAN_3V3_Pin,
     .mosfet_port = MOSFET_CHAN_3V3_GPIO_Port,
     .output_enabled = false,
-    .target_voltage = VOLTAGE_3V3,
+    .target_voltage_whole = VOLTAGE_3V3_WHOLE,
+    .target_voltage_decimal = VOLTAGE_3V3_DECIMAL
 };
 
 static const Power_Controller_Channel_t channel_5v_default = {
@@ -24,21 +25,25 @@ static const Power_Controller_Channel_t channel_5v_default = {
     .mosfet_pin = MOSFET_CHAN_5V_Pin,
     .mosfet_port = MOSFET_CHAN_5V_GPIO_Port,
     .output_enabled = false,
-    .target_voltage = VOLTAGE_5V,
+    .target_voltage_whole = VOLTAGE_5V_WHOLE,
+    .target_voltage_decimal = VOLTAGE_5V_DECIMAL
 };
 
 static const Power_Controller_Channel_t channel_var_default = {
      .output_enabled = false,
     .channel_type = CHANNEL_TYPE_VARIABLE,
     .mosfet_pin = MOSFET_CHAN_VAR_Pin,
-    .target_voltage = VOLTAGE_VARIABLE_MIN,
+        .target_voltage_whole = VOLTAGE_VARIABLE_MIN_WHOLE,
+    .target_voltage_decimal = VOLTAGE_VARIABLE_MIN_DECIMAL,
     .mosfet_port = MOSFET_CHAN_VAR_GPIO_Port,
     .variable = {
         .adjustment_state = {0},
         .cur_dac_steps = 0,
-        .cur_voltage = 0.0f,
-        .cur_current = 0.0f,
-        .cur_power = 0.0f,
+        .cur_voltage_whole = 0,
+              .cur_voltage_decimal = 0,
+        .cur_current_whole= 0,
+          .cur_current_decimal= 0,
+        // .cur_power = 0.0f,
         .pid = {
             .p_gain = 0.0f,
             .i_gain = 0.0f,
@@ -70,28 +75,33 @@ _Error_Codes Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *
 }
 
 Power_Controller_SetVariableVoltage_Result_t
-Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage)
+Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
+                                    uint32_t target_voltage_decimal)
 {
     Power_Controller_SetVariableVoltage_Result_t result = { .peripheral = PERIPHERAL_MCP,
                                                             .error = ERROR_NONE };
 
     Power_Controller_Channel_t chan = ctrl->channels[POWER_CHANNEL_VARIABLE];
 
-    if (target_voltage < VOLTAGE_VARIABLE_MIN) {
-        target_voltage = VOLTAGE_VARIABLE_MIN;
+    if (target_voltage_whole < VOLTAGE_VARIABLE_MIN_WHOLE) {
+        target_voltage_whole = VOLTAGE_VARIABLE_MIN_WHOLE;
+        target_voltage_decimal = 0;
     }
 
-    if (target_voltage > VOLTAGE_VARIABLE_MAX) {
-        target_voltage = VOLTAGE_VARIABLE_MAX;
+    if (target_voltage_whole > VOLTAGE_VARIABLE_MAX_WHOLE) {
+        target_voltage_whole = VOLTAGE_VARIABLE_MAX_WHOLE;
+        target_voltage_decimal = 0;
     }
 
-    MCP_SetSteps_Result_t mcp_res = MCP_SetSteps(ctrl->i2c_handle, target_voltage);
+    MCP_SetSteps_Result_t mcp_res =
+        MCP_SetSteps(ctrl->i2c_handle, target_voltage_whole, target_voltage_decimal);
     if (mcp_res.error != ERROR_NONE) {
         result.error = mcp_res.error;
         return result;
     }
 
-    chan.target_voltage = target_voltage;
+    chan.target_voltage_whole = target_voltage_whole;
+    chan.target_voltage_decimal = target_voltage_decimal;
     chan.variable.cur_dac_steps = mcp_res.steps;
 
     // this is to give enough time for the voltage to rise/fall
@@ -106,9 +116,11 @@ Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_volta
         return result;
     }
 
-    chan.variable.cur_voltage = ina_res.voltage;
-    chan.variable.cur_current = ina_res.current;
-    chan.variable.cur_power = ina_res.power;
+    chan.variable.cur_voltage_whole = ina_res.voltage_whole;
+    chan.variable.cur_voltage_decimal = ina_res.voltage_decimal;
+    chan.variable.cur_current_whole = ina_res.current_whole;
+    chan.variable.cur_current_decimal = ina_res.current_decimal;
+    // chan.variable.cur_power = ina_res.power;
 
     ctrl->channels[POWER_CHANNEL_VARIABLE] = chan;
 
@@ -129,9 +141,11 @@ void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels cha
         chan.variable.pid.last_time = HAL_GetTick();
         // TODO: start pid
         if (!enabled) {
-            Power_Controller_SetVariableVoltage(ctrl, VOLTAGE_VARIABLE_MIN);
+            Power_Controller_SetVariableVoltage(ctrl, VOLTAGE_VARIABLE_MIN_WHOLE,
+                                                VOLTAGE_VARIABLE_MIN_DECIMAL);
         } else {
-            Power_Controller_SetVariableVoltage(ctrl, chan.target_voltage);
+            Power_Controller_SetVariableVoltage(ctrl, chan.target_voltage_whole,
+                                                chan.target_voltage_decimal);
         }
     }
 

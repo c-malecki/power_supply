@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "INA219.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "common.h"
 
 static void read_voltage(I2C_HandleTypeDef *i2c_handle, INA_Read_Result_t *result);
@@ -28,7 +29,7 @@ INA_Read_Result_t INA_Read(I2C_HandleTypeDef *i2c_handle)
         return result;
     }
 
-    result.power = result.voltage * result.current;
+    // result.power = result.voltage * result.current;
 
     return result;
 }
@@ -44,10 +45,12 @@ static void read_voltage(I2C_HandleTypeDef *i2c_handle, INA_Read_Result_t *resul
     }
 
     uint16_t raw_voltage = ((pData[0] << 8) | pData[1]);
-    printf("raw_voltage: %u\r\n", raw_voltage);
-    float voltage = (raw_voltage >> 3) * 0.004f;
+    uint32_t millivolts = (raw_voltage >> 3) * 4;
 
-    result->voltage = voltage;
+    result->voltage_whole = millivolts / 1000;
+    result->voltage_decimal = millivolts % 1000;
+
+    printf("voltage: %d.%uV\r\n", result->voltage_whole, result->voltage_decimal);
 }
 
 // based on equations in ./docs/components/INA219.pdf
@@ -64,8 +67,14 @@ static void read_current(I2C_HandleTypeDef *i2c_handle, INA_Read_Result_t *resul
     }
 
     int16_t raw_current = (int16_t)((pData[0] << 8) | pData[1]);
-    printf("raw_current: %u\r\n", raw_current);
-    float milliamps = raw_current * 0.02;
+    int32_t microamps = raw_current * 20;
 
-    result->current = milliamps;
+    result->current_whole = microamps / 1000;
+    result->current_decimal = abs(microamps % 1000);
+
+    printf("current: %d.%uA\r\n", result->current_whole, result->current_decimal);
+
+    // TODO: check that this is actually the right conversion
+    // float milliamps = raw_current * 0.02;
+    // printf("currentf: %.04fA\r\n", milliamps);
 }
