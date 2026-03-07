@@ -7,9 +7,9 @@
 #include <stdio.h>
 //
 #include "power_controller.h"
-#include "float.h"
 #include "MCP4725.h"
 #include "INA219.h"
+#include "common.h"
 
 static const Power_Controller_Channel_t channel_3v3_default = {
     .channel_type = CHANNEL_TYPE_FIXED,
@@ -51,22 +51,15 @@ static const Power_Controller_Channel_t channel_var_default = {
 
 Power_Controller_Ping_Result_t Power_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
 {
-    Power_Controller_Ping_Result_t result = { .mcp = 0, .ina = 0 };
+    Power_Controller_Ping_Result_t result = { .mcp = ERROR_NONE, .ina = ERROR_NONE };
 
-    uint8_t err = HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100);
-    if (err != HAL_OK) {
-        result.mcp = 1;
-    }
-
-    err = HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100);
-    if (err != HAL_OK) {
-        result.ina = 1;
-    }
+    result.mcp = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100));
+    result.ina = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100));
 
     return result;
 }
 
-uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+_Error_Codes Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
     ctrl->i2c_handle = i2c_handle;
     ctrl->channels[POWER_CHANNEL_3V3] = channel_3v3_default;
@@ -76,8 +69,12 @@ uint8_t Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
     return INA_Init(i2c_handle);
 }
 
-uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage)
+Power_Controller_SetVariableVoltage_Result_t
+Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float target_voltage)
 {
+    Power_Controller_SetVariableVoltage_Result_t result = { .peripheral = PERIPHERAL_MCP,
+                                                            .error = ERROR_NONE };
+
     Power_Controller_Channel_t chan = ctrl->channels[POWER_CHANNEL_VARIABLE];
 
     if (target_voltage < VOLTAGE_VARIABLE_MIN) {
@@ -88,15 +85,14 @@ uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float targ
         target_voltage = VOLTAGE_VARIABLE_MAX;
     }
 
-    uint16_t steps = MCP_VoltageToSteps(target_voltage);
-
-    uint8_t err = MCP_SetSteps(ctrl->i2c_handle, steps);
-    if (err != HAL_OK) {
-        return err;
+    MCP_SetSteps_Result_t mcp_res = MCP_SetSteps(ctrl->i2c_handle, target_voltage);
+    if (mcp_res.error != ERROR_NONE) {
+        result.error = mcp_res.error;
+        return result;
     }
 
     chan.target_voltage = target_voltage;
-    chan.variable.cur_dac_steps = steps;
+    chan.variable.cur_dac_steps = mcp_res.steps;
 
     // this is to give enough time for the voltage to rise/fall
     // TODO: retest time it takes after redoing routing
@@ -104,8 +100,10 @@ uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float targ
     HAL_Delay(350);
 
     INA_Read_Result_t ina_res = INA_Read(ctrl->i2c_handle);
-    if (ina_res.error != HAL_OK) {
-        return ina_res.error;
+    if (ina_res.error != ERROR_NONE) {
+        result.error = ina_res.error;
+        result.peripheral = PERIPHERAL_INA;
+        return result;
     }
 
     chan.variable.cur_voltage = ina_res.voltage;
@@ -114,7 +112,7 @@ uint8_t Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, float targ
 
     ctrl->channels[POWER_CHANNEL_VARIABLE] = chan;
 
-    return err;
+    return result;
 }
 
 void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels channel, bool enabled)
@@ -155,7 +153,7 @@ DAC Test this - if PI drives the wrong direction, add the negative sign.
 Consider deadband to prevent oscillation:
 
     if (fabs(error) < 0.05f) {  // Within 50mV, don't adjust
-        return HAL_OK;
+        return ERROR_NONE;
     }
 */
 // static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle)
@@ -168,7 +166,7 @@ Consider deadband to prevent oscillation:
 
 //     if (delta_time > 1.0f) {
 //         chan->pid.last_time = current_time;
-//         return HAL_OK;
+//         return ERROR_NONE;
 //     }
 
 //     chan->pid.last_time = current_time;
@@ -197,7 +195,7 @@ Consider deadband to prevent oscillation:
 //     }
 
 //     err = MCP_SetSteps(i2c_handle, (uint16_t)dac_steps);
-//     if (err != HAL_OK) {
+//     if (err != ERROR_NONE) {
 //         return err;
 //     }
 
@@ -206,5 +204,5 @@ Consider deadband to prevent oscillation:
 //         return 5;
 //     }
 
-//     return HAL_OK;
+//     return ERROR_NONE;
 // }

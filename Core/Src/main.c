@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "tests.h"
+#include "common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +54,8 @@
 /* USER CODE BEGIN PV */
 
 static App_t app;
+
+void I2C_ResetBus(void);
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -170,6 +173,12 @@ int main(void)
 
     App_Init(&app, &hi2c1);
 
+    Power_Controller_SetVariableVoltage_Result_t result =
+        Power_Controller_SetVariableVoltage(&app.pwr_ctrl, VOLTAGE_VARIABLE_MAX);
+    if (result.error != ERROR_NONE) {
+        printf("Power_Controller_SetVariableVoltage\nError: %u\nPrph: %u\r\n", result.error,
+               result.peripheral);
+    }
     // Test_LEDs(&app);
 
     // Test_VariableChannelLevels(&app);
@@ -235,7 +244,31 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void I2C_ResetBus(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
+    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+    for (int i = 0; i < 9; i++) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+        HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+        HAL_Delay(1);
+    }
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+
+    HAL_I2C_DeInit(&hi2c1);
+}
 /* USER CODE END 4 */
 
 /**

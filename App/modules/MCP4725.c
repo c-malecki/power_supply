@@ -4,6 +4,8 @@
 #include "stdint.h"
 #include <math.h>
 #include <limits.h>
+#include <stdint.h>
+#include "common.h"
 
 uint16_t float_to_uint16(float value)
 {
@@ -22,23 +24,26 @@ uint16_t float_to_uint16(float value)
     return (uint16_t)rounded_f;
 }
 
-uint16_t MCP_VoltageToSteps(float target_voltage)
+uint16_t voltage_to_steps(float target_voltage)
 {
     return (uint16_t)float_to_uint16((12.0f - target_voltage) / MCP_STEP_VOLTAGE);
 }
 
-uint8_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps)
+MCP_SetSteps_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, float target_voltage)
 {
+    MCP_SetSteps_Result_t result;
+
+    uint16_t steps = voltage_to_steps(target_voltage);
+
     uint8_t pData[2];
 
     pData[0] = (steps >> 8) & 0x0F;
     pData[1] = steps & 0xFF;
 
-    uint8_t err = HAL_I2C_Master_Transmit(handle, MCP_I2C_ADDRESS, pData, 2, 100);
-    if (err != HAL_OK)
-        return err;
+    result.steps = steps;
+    result.error = ConvHALError(HAL_I2C_Master_Transmit(handle, MCP_I2C_ADDRESS, pData, 2, 100));
 
-    return HAL_OK;
+    return result;
 }
 
 // float steps_to_voltage(uint16_t steps)
