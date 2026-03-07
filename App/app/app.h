@@ -10,6 +10,7 @@
 #include "led_controller.h"
 #include "power_controller.h"
 #include "temperature_controller.h"
+#include "common.h"
 
 typedef enum {
     APP_STATE_INIT_PRPH_PING = 0,
@@ -19,36 +20,14 @@ typedef enum {
     APP_STATE_RUN_CHECK_PWR,
 } App_States;
 
-typedef enum {
-    APP_CTRL_OK = 0,
-    APP_CTRL_DSP,
-    APP_CTRL_PWR,
-    APP_CTRL_TEMP,
-} App_Controllers;
-
-typedef enum {
-    APP_PRPH_OK = 0,
-    APP_PRPH_MCP,
-    APP_PRPH_INA,
-    APP_PRPH_GME,
-    APP_PRPH_DS18
-} App_Peripherals;
-
-typedef enum {
-    APP_ERR_OK = 0,
-    APP_ERR_I2C_ERROR,
-    APP_ERR_I2C_BUSY,
-    APP_ERR_I2C_TIMEOUT,
-    APP_ERR_PWR_OVERCURRENT,
-    APP_ERR_PWR_OVERVOLTAGE
-} App_Errors;
+extern const char *_App_State_Lookup[];
 
 typedef struct
 {
     App_States state;
-    App_Controllers ctrl;
-    App_Peripherals prph;
-    App_Errors err;
+    _Controllers controller;
+    _Peripherals peripheral;
+    _Error_Codes error_code;
 } App_Status_t;
 
 typedef struct

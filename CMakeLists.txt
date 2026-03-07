@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Middleware/SEGGER_RTT.c"
     "App/app/app.c"
+    "App/common/common.c"
     "App/controllers/display_controller.c"
     "App/controllers/input_controller.c"
     "App/controllers/led_controller.c"
@@ -54,9 +55,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/controllers/temperature_controller.c"
     "App/modules/INA219.c"
     "App/modules/MCP4725.c"
-    "App/modules/GME12864-13.c"
     "App/modules/ds18b20.c"
     "App/modules/ow.c"
+    "App/modules/ssd1306_fonts.c"
+    "App/modules/ssd1306.c"
     "App/tests/test_state.c"
     "App/tests/test_leds.c"
     "App/tests/test_power.c"
@@ -67,6 +69,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     "Middleware"
     "App/app"
+    "App/common"
     "App/controllers"
     "App/modules"
     "App/tests"

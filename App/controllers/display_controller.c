@@ -2,18 +2,28 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "display_controller.h"
-#include "GME12864-13.h"
+#include "stm32f4xx_hal.h"
 #include "tim.h"
+#include "ssd1306_conf.h"
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
+#include "common.h"
 
-uint8_t Display_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
+_Error_Codes Display_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
 {
-    return HAL_I2C_IsDeviceReady(i2c_handle, GME_I2C_ADDR, 3, 100);
+    return ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, SSD1306_I2C_ADDR, 3, 100));
 }
 
-uint8_t Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    return GME_WriteCmd(i2c_handle);
+    char *text = "Initializing...";
+    ssd1306_Init();
+    ssd1306_SetCursor(12, 27);
+    ssd1306_WriteString(text, Font_7x10, White);
+    ssd1306_UpdateScreen();
 }
+
+void Display_Controller_ShowVariableChannel(float voltage, float current) { }
 
 // chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
 // chan->rotary.clk_pin = RTRY_CLK_Pin;
@@ -73,7 +83,7 @@ uint8_t Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i
 //         case ROTARY_MODE_CONFIRM:
 //             err = Channel_VAR_SetVoltage(ctrl, chan, pending_voltage);
 //             chan->rotary.mode = ROTARY_MODE_OFF;
-//             if (err != HAL_OK) {
+//             if (err != ERROR_NONE) {
 //                 return err;
 //             }
 //             printf("confirm to off mode\r\n");
