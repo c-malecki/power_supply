@@ -4,38 +4,38 @@
 #include "tim.h"
 #include "led_controller.h"
 
-const Input_LED_Color_t LED_RED = { 255, 0, 0 };
-const Input_LED_Color_t LED_GREEN = { 0, 255, 0 };
-const Input_LED_Color_t LED_BLUE = { 0, 0, 255 };
-const Input_LED_Color_t LED_YELLOW = { 255, 255, 0 };
+const Input_LED_Color_t LED_COLOR_RED = { 255, 0, 0 };
+const Input_LED_Color_t LED_COLOR_GREEN = { 0, 255, 0 };
+const Input_LED_Color_t LED_COLOR_BLUE = { 0, 0, 255 };
+const Input_LED_Color_t LED_COLOR_YELLOW = { 255, 255, 0 };
 const Input_LED_Color_t LED_OFF = { 0, 0, 0 };
 
 static const Input_LED_t led_status_default = { .r_htim = NULL, // htim1
-                                                .g_htim = NULL, // htim1
-                                                .b_htim = NULL, // htim1
                                                 .r_timch = TIM_CHANNEL_2,
+                                                .g_htim = NULL, // htim1
                                                 .g_timch = TIM_CHANNEL_1,
+                                                .b_htim = NULL, // htim1
                                                 .b_timch = TIM_CHANNEL_3 };
 
 static const Input_LED_t led_3v3_default = { .r_htim = NULL, // htim2
-                                             .g_htim = NULL, // htim5
-                                             .b_htim = NULL, // htim5
                                              .r_timch = TIM_CHANNEL_3,
+                                             .g_htim = NULL, // htim5
                                              .g_timch = TIM_CHANNEL_4,
+                                             .b_htim = NULL, // htim5
                                              .b_timch = TIM_CHANNEL_3 };
 
 static const Input_LED_t led_5v_default = { .r_htim = NULL, // htim2
-                                            .g_htim = NULL, // htim2
-                                            .b_htim = NULL, // htim3
                                             .r_timch = TIM_CHANNEL_1,
+                                            .g_htim = NULL, // htim2
                                             .g_timch = TIM_CHANNEL_2,
+                                            .b_htim = NULL, // htim3
                                             .b_timch = TIM_CHANNEL_1 };
 
 static const Input_LED_t led_var_default = { .r_htim = NULL, // htim3
-                                             .g_htim = NULL, // htim4
-                                             .b_htim = NULL, // htim4
                                              .r_timch = TIM_CHANNEL_2,
+                                             .g_htim = NULL, // htim4
                                              .g_timch = TIM_CHANNEL_1,
+                                             .b_htim = NULL, // htim4
                                              .b_timch = TIM_CHANNEL_2 };
 
 void LED_Controller_Init(LED_Controller_t *ctrl)

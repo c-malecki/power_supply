@@ -77,23 +77,17 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BTN_DSP_MENU_Pin */
-  GPIO_InitStruct.Pin = BTN_DSP_MENU_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : BTN_DSP_MENU_Pin RTRY_DT_Pin */
+  GPIO_InitStruct.Pin = BTN_DSP_MENU_Pin|RTRY_DT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BTN_DSP_MENU_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RTRY_SW_Pin RTRY_CLK_Pin */
   GPIO_InitStruct.Pin = RTRY_SW_Pin|RTRY_CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : RTRY_DT_Pin */
-  GPIO_InitStruct.Pin = RTRY_DT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(RTRY_DT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : NCB0_Pin RELAY_CHAN_PWR_Pin NCB2_Pin MOSFET_CHAN_3V3_Pin
                            MOSFET_CHAN_5V_Pin MOSFET_CHAN_VAR_Pin */
