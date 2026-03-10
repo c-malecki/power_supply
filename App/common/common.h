@@ -1,6 +1,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <stdint.h>
+
 typedef enum {
     CONTROLLER_NONE = 0,
     CONTROLLER_DISPLAY,
@@ -34,6 +36,8 @@ typedef enum {
     ERROR_DS18_RESET,
     ERROR_DS18_LEN,
     ERROR_DS18_ROM_ID,
+    ERROR_GME_INVALID_STR_LEN,
+    ERROR_GME_INVALID_CHAR,
     ERROR_UNKNOWN,
 } _Error_Codes;
 

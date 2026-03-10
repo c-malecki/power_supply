@@ -59,9 +59,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "App/modules/ow.c"
     "App/modules/ssd1306_fonts.c"
     "App/modules/ssd1306.c"
-    "App/tests/test_state.c"
+    "App/tests/test_display.c"
     "App/tests/test_leds.c"
     "App/tests/test_power.c"
+    "App/tests/test_state.c"
     "App/tests/test_temperature.c"
 )
 
