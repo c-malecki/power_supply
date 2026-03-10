@@ -22,6 +22,8 @@ const char *_Error_Message_Lookup[] = {
     "DS18 reset failed",
     "DS18 invalid data length",
     "DS18 ROM ID error",
+    "GME invalid string length",
+    "GME invalid character",
     "unknown error",
 };
 

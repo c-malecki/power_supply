@@ -3,6 +3,7 @@
 
 #include "app.h"
 
+void Test_Display(App_t *app);
 void Test_LEDs(App_t *app);
 void Test_VariableChannelLevels(App_t *app);
 void Test_TemperatureSensor(App_t *app);

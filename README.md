@@ -4,6 +4,14 @@ A digitally controlled variable bench power supply unit with fixed and variable 
 
 *This document is subject to change as I continue to work on the project and make adjustments through iterative design.*
 
+## Post-Phase Write-ups
+
+I would consider there to be 3 major "phases" of this project, of which I have/will be creating a write-up for to reflect on the challenges I faced and evaluate the solutions I used, as well as what I learned overall about developing an embedded project.
+
+1. [Discovery Phase](./docs/writeup/discovery.md)
+2. [Hardware Phase](./docs/writeup/hardware.md)
+3. Software Phase (currently in progress)
+
 ## Inspiration
 
 This project was inspired by two main factors:

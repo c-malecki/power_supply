@@ -144,7 +144,7 @@ void init_controllers(App_t *app)
     // temp is initialized in the ping test
     printf("temperature: OK\r\n");
 
-    // Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
+    Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
     printf("display: OK\r\n\n");
 }
 

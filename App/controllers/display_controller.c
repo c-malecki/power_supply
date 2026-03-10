@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "display_controller.h"
 #include "stm32f4xx_hal.h"
 #include "tim.h"
@@ -21,6 +22,60 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
     ssd1306_SetCursor(12, 27);
     ssd1306_WriteString(text, Font_7x10, White);
     ssd1306_UpdateScreen();
+}
+
+_Error_Codes Display_Controller_Write_Yellow(char *str)
+{
+    size_t len = strlen(str);
+    if (len == 0 || len > DISPLAY_YELLOW_MAX_CHAR) {
+        return ERROR_GME_INVALID_STR_LEN;
+    }
+
+    uint8_t x = 2;
+    uint8_t y = 3;
+
+    ssd1306_SetCursor(x, y);
+    ssd1306_WriteString(DISPLAY_7x10_CLEAR_LINE, Font_7x10, White);
+
+    for (int i = 0; i < len; i++) {
+        ssd1306_SetCursor(x, y);
+        char v = ssd1306_WriteChar(str[i], Font_7x10, White);
+        if (v == 0) {
+            return ERROR_GME_INVALID_CHAR;
+        }
+        x += Font_7x10.width + 2;
+    }
+
+    ssd1306_UpdateScreen();
+
+    return ERROR_NONE;
+}
+
+_Error_Codes Display_Controller_Write_Blue(char *str, Display_Blue_Pos pos)
+{
+    size_t len = strlen(str);
+    if (len == 0 || len > DISPLAY_BLUE_MAX_CHAR) {
+        return ERROR_GME_INVALID_STR_LEN;
+    }
+
+    uint8_t x = 3;
+    uint8_t y = pos == DISPLAY_BLUE_TOP ? 20 : 42;
+
+    ssd1306_SetCursor(x, y);
+    ssd1306_WriteString(DISPLAY_11x18_CLEAR_LINE, Font_11x18, White);
+
+    for (int i = 0; i < len; i++) {
+        ssd1306_SetCursor(x, y);
+        char v = ssd1306_WriteChar(str[i], Font_11x18, White);
+        if (v == 0) {
+            return ERROR_GME_INVALID_CHAR;
+        }
+        x += Font_11x18.width + 2;
+    }
+
+    ssd1306_UpdateScreen();
+
+    return ERROR_NONE;
 }
 
 void Display_Controller_ShowVariableChannel(int32_t voltage_whole, uint32_t voltage_decimal,

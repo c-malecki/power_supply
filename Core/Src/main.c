@@ -173,19 +173,22 @@ int main(void)
 
     App_Init(&app, &hi2c1);
 
-    Power_Controller_SetVariableVoltage_Result_t result = Power_Controller_SetVariableVoltage(
-        &app.pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE, VOLTAGE_VARIABLE_MAX_DECIMAL);
-    if (result.error != ERROR_NONE) {
-        app.status.controller = CONTROLLER_POWER;
-        app.status.error_code = result.error;
-        app.status.peripheral = result.peripheral;
-        App_Status_Check(&app);
-    }
+    // Power_Controller_SetVariableVoltage_Result_t result = Power_Controller_SetVariableVoltage(
+    //     &app.pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE, VOLTAGE_VARIABLE_MAX_DECIMAL);
+    // if (result.error != ERROR_NONE) {
+    //     app.status.controller = CONTROLLER_POWER;
+    //     app.status.error_code = result.error;
+    //     app.status.peripheral = result.peripheral;
+    //     App_Status_Check(&app);
+    // }
+
+    Test_Display(&app);
+
     // Test_LEDs(&app);
 
     // Test_VariableChannelLevels(&app);
 
-    Test_TemperatureSensor(&app);
+    // Test_TemperatureSensor(&app);
 
     // Test_PrintAppState(&app);
 
