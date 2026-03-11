@@ -27,6 +27,8 @@
 #define VOLTAGE_10V_WHOLE 10
 #define VOLTAGE_10V_DECIMAL 0
 
+typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
+
 typedef enum {
     POWER_CHANNEL_3V3 = 0,
     POWER_CHANNEL_5V,
@@ -78,7 +80,6 @@ typedef struct
             uint32_t cur_voltage_decimal;
             int32_t cur_current_whole;
             uint32_t cur_current_decimal;
-            // float cur_power;
             Channel_VAR_PID_t pid;
         } variable;
     };
@@ -88,26 +89,19 @@ typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
     Power_Controller_Channel_t channels[3];
+    Error_Callback_t error_cb;
+    void *error_ctx;
 } Power_Controller_t;
 
-typedef struct
-{
-    _Error_Codes mcp;
-    _Error_Codes ina;
-} Power_Controller_Ping_Result_t;
+void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 
-typedef struct
-{
-    _Peripherals peripheral;
-    _Error_Codes error;
-} Power_Controller_SetVariableVoltage_Result_t;
+void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
+void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
+                                 uint32_t target_voltage_decimal);
+void Power_Controller_UpdateCurValues(Power_Controller_t *ctrl);
 
-Power_Controller_Ping_Result_t Power_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle);
-_Error_Codes Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
-void Power_Controller_EnableChannel(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
-Power_Controller_SetVariableVoltage_Result_t
-Power_Controller_SetVariableVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
-                                    uint32_t target_voltage_decimal);
 void Power_Controller_PrintState(Power_Controller_t *ctrl);
 
 #endif // __POWER_CONTROLLER_H__

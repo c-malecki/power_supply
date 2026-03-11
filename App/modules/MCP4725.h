@@ -13,11 +13,11 @@
 
 typedef struct
 {
-    _Error_Codes error;
+    _Error_Codes code;
     uint16_t steps;
-} MCP_SetSteps_Result_t;
+} MCP_Result_t;
 
-MCP_SetSteps_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, int32_t target_voltage_whole,
-                                   uint32_t target_voltage_decimal);
+MCP_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, int32_t target_voltage_whole,
+                          uint32_t target_voltage_decimal);
 
 #endif

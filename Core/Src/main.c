@@ -18,7 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "display_controller.h"
 #include "i2c.h"
+#include "stm32f4xx_hal.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -72,8 +74,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_var < 50)
             return;
         last_press_var = now;
-        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_VARIABLE].output_enabled;
-        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_VARIABLE, enabled);
+        bool enabled = !app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_enabled;
+        Power_Controller_EnableOut(&app.power_controller, POWER_CHANNEL_VARIABLE, enabled);
         printf("BTN_CHAN_VAR: %u\r\n\n", enabled);
         break;
     }
@@ -83,8 +85,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_5v < 50)
             return;
         last_press_5v = now;
-        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_5V].output_enabled;
-        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_5V, enabled);
+        bool enabled = !app.power_controller.channels[POWER_CHANNEL_5V].output_enabled;
+        Power_Controller_EnableOut(&app.power_controller, POWER_CHANNEL_5V, enabled);
         printf("BTN_CHAN_5V: %u\r\n\n", enabled);
         break;
     }
@@ -94,8 +96,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_3v3 < 50)
             return;
         last_press_3v3 = now;
-        bool enabled = !app.pwr_ctrl.channels[POWER_CHANNEL_3V3].output_enabled;
-        Power_Controller_EnableChannel(&app.pwr_ctrl, POWER_CHANNEL_3V3, enabled);
+        bool enabled = !app.power_controller.channels[POWER_CHANNEL_3V3].output_enabled;
+        Power_Controller_EnableOut(&app.power_controller, POWER_CHANNEL_3V3, enabled);
         printf("BTN_CHAN_3V3: %u\r\n\n", enabled);
         break;
     }
@@ -104,7 +106,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         //     if (now - last_press_rotary < 50)
         //         return;
         //     last_press_rotary = now;
-        //     app.pwr_ctrl->chan_var->rotary.pressed = true;
+        //     app.power_controller->chan_var->rotary.pressed = true;
         //     break;
 
         // case BTN_DSP_MENU_Pin:
@@ -171,26 +173,11 @@ int main(void)
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
+    app.state = APP_STATE_PRE_INIT;
     App_Init(&app, &hi2c1);
 
-    // Power_Controller_SetVariableVoltage_Result_t result = Power_Controller_SetVariableVoltage(
-    //     &app.pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE, VOLTAGE_VARIABLE_MAX_DECIMAL);
-    // if (result.error != ERROR_NONE) {
-    //     app.status.controller = CONTROLLER_POWER;
-    //     app.status.error_code = result.error;
-    //     app.status.peripheral = result.peripheral;
-    //     App_Status_Check(&app);
-    // }
-
-    Test_Display(&app);
-
-    // Test_LEDs(&app);
-
-    // Test_VariableChannelLevels(&app);
-
-    // Test_TemperatureSensor(&app);
-
-    // Test_PrintAppState(&app);
+    Power_Controller_SetVoltage(&app.power_controller, VOLTAGE_5V_WHOLE, VOLTAGE_5V_DECIMAL);
+    Power_Controller_EnableOut(&app.power_controller, POWER_CHANNEL_VARIABLE, true);
 
     /* USER CODE END 2 */
 
@@ -201,7 +188,13 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        // printf("cur_temp: %d\r\n", app->temp_ctrl.cur_temp);
+        HAL_Delay(1000);
+        Power_Controller_UpdateCurValues(&app.power_controller);
+        Power_Controller_Channel_t chan = app.power_controller.channels[POWER_CHANNEL_VARIABLE];
+        Display_Controller_ShowVariableChannel(
+            &app.display_controller, chan.variable.cur_voltage_whole,
+            chan.variable.cur_voltage_decimal, chan.variable.cur_current_whole,
+            chan.variable.cur_current_decimal);
         // App_Run(&app);
     }
     /* USER CODE END 3 */

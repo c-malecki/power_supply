@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
+#include <inttypes.h>
 #include "display_controller.h"
 #include "stm32f4xx_hal.h"
 #include "tim.h"
@@ -10,9 +12,16 @@
 #include "ssd1306_fonts.h"
 #include "common.h"
 
-_Error_Codes Display_Controller_PingPeripherals(I2C_HandleTypeDef *i2c_handle)
+void Display_Controller_PingGME(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    return ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, SSD1306_I2C_ADDR, 3, 100));
+    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, SSD1306_I2C_ADDR, 3, 100));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                    .peripheral = PERIPHERAL_GME,
+                                    .code = code,
+                                    .function = FUNCTION_GME_PING });
+    }
 }
 
 void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
@@ -24,11 +33,15 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
     ssd1306_UpdateScreen();
 }
 
-_Error_Codes Display_Controller_Write_Yellow(char *str)
+void Display_Controller_Write_Yellow(Display_Controller_t *ctrl, char *str)
 {
     size_t len = strlen(str);
     if (len == 0 || len > DISPLAY_YELLOW_MAX_CHAR) {
-        return ERROR_GME_INVALID_STR_LEN;
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                    .peripheral = PERIPHERAL_GME,
+                                    .code = ERROR_GME_INVALID_STR_LEN,
+                                    .function = FUNCTION_GME_WRITE_YELLOW });
     }
 
     uint8_t x = 2;
@@ -41,21 +54,27 @@ _Error_Codes Display_Controller_Write_Yellow(char *str)
         ssd1306_SetCursor(x, y);
         char v = ssd1306_WriteChar(str[i], Font_7x10, White);
         if (v == 0) {
-            return ERROR_GME_INVALID_CHAR;
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                        .peripheral = PERIPHERAL_GME,
+                                        .code = ERROR_GME_INVALID_CHAR,
+                                        .function = FUNCTION_GME_WRITE_CHAR });
         }
         x += Font_7x10.width + 2;
     }
 
     ssd1306_UpdateScreen();
-
-    return ERROR_NONE;
 }
 
-_Error_Codes Display_Controller_Write_Blue(char *str, Display_Blue_Pos pos)
+void Display_Controller_Write_Blue(Display_Controller_t *ctrl, char *str, Display_Blue_Pos pos)
 {
     size_t len = strlen(str);
     if (len == 0 || len > DISPLAY_BLUE_MAX_CHAR) {
-        return ERROR_GME_INVALID_STR_LEN;
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                    .peripheral = PERIPHERAL_GME,
+                                    .code = ERROR_GME_INVALID_STR_LEN,
+                                    .function = FUNCTION_GME_WRITE_BLUE });
     }
 
     uint8_t x = 3;
@@ -68,19 +87,29 @@ _Error_Codes Display_Controller_Write_Blue(char *str, Display_Blue_Pos pos)
         ssd1306_SetCursor(x, y);
         char v = ssd1306_WriteChar(str[i], Font_11x18, White);
         if (v == 0) {
-            return ERROR_GME_INVALID_CHAR;
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                        .peripheral = PERIPHERAL_GME,
+                                        .code = ERROR_GME_INVALID_CHAR,
+                                        .function = FUNCTION_GME_WRITE_CHAR });
         }
         x += Font_11x18.width + 2;
     }
 
     ssd1306_UpdateScreen();
-
-    return ERROR_NONE;
 }
 
-void Display_Controller_ShowVariableChannel(int32_t voltage_whole, uint32_t voltage_decimal,
-                                            int32_t current_whole, uint32_t current_decimal)
+void Display_Controller_ShowVariableChannel(Display_Controller_t *ctrl, int32_t voltage_whole,
+                                            uint32_t voltage_decimal, int32_t current_whole,
+                                            uint32_t current_decimal)
 {
+    char buf[DISPLAY_BLUE_MAX_CHAR + 1];
+
+    snprintf(buf, sizeof(buf), "%" PRId32 ".%" PRIu32 "V", voltage_whole, voltage_decimal);
+    Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_TOP);
+
+    snprintf(buf, sizeof(buf), "%" PRId32 ".%" PRIu32 "mA", current_whole, current_decimal);
+    Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_BOT);
 }
 
 // chan->rotary.clk_port = RTRY_CLK_GPIO_Port;

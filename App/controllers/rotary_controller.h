@@ -3,6 +3,9 @@
 
 #include "stm32f4xx_hal.h"
 #include <stdbool.h>
+#include "common.h"
+
+typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 
 typedef enum {
     DISPLAY_VARIABLE_CHANNEL = 0,
@@ -26,6 +29,8 @@ typedef struct
 typedef struct
 {
     Rotary_t rotary;
+    Error_Callback_t error_cb;
+    void *error_ctx;
 } Rotary_Controller_t;
 
 void Rotary_Controller_State_Print(Rotary_Controller_t *ctrl);

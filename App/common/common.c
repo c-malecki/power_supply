@@ -1,13 +1,81 @@
 #include <stdint.h>
 #include "common.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include "led_controller.h"
 
 const char *_Controller_Lookup[] = {
-    "no controller specified", "display controller", "input controller",
-    "led controller",          "power controller",   "temperature controller",
+    "Not Specified",  "Display Controller", "Input Controller",
+    "LED Controller", "Power Controller",   "Temperature Controller",
 };
 
 const char *_Peripheral_Lookup[] = {
-    "no peripheral specified", "MCP4725", "INA219", "GME12864-13", "DS18B20",
+    "Not Specified", "MCP4725", "INA219", "GME12864-13", "DS18B20",
+};
+
+const char *_Function_Lookup[] = { "Not Specified",    "INA Ping",       "MCP Ping",
+                                   "GME Ping",         "INA Init",       "INA Read Voltage",
+                                   "INA Read Current", "MCP SetSteps",   "GME Write Yellow",
+                                   "GME Write Blue",   "GME Write Char", "DS18 Update ROM ID",
+                                   "DS18 Conf",        "DS18 Cnv",       "DS18 Req Read" };
+
+const _Error_Blink_t _Error_Blink_Lookup[] = {
+    {
+        .code = ERROR_NONE,
+        .blinks = 0,
+    },
+    {
+        .code = ERROR_I2C_GENERIC_ERROR,
+        .blinks = 2,
+    },
+    {
+        .code = ERROR_I2C_BUSY,
+        .blinks = 3,
+    },
+    {
+        .code = ERROR_I2C_TIMEOUT,
+        .blinks = 4,
+    },
+    {
+        .code = ERROR_POWER_OVERCURRENT,
+        .blinks = 3,
+    },
+    {
+        .code = ERROR_POWER_OVERVOLTAGE,
+        .blinks = 2,
+    },
+    {
+        .code = ERROR_DS18_BUSY,
+        .blinks = 2,
+    },
+    {
+        .code = ERROR_DS18_BUS,
+        .blinks = 3,
+    },
+    {
+        .code = ERROR_DS18_RESET,
+        .blinks = 4,
+    },
+    {
+        .code = ERROR_DS18_LEN,
+        .blinks = 5,
+    },
+    {
+        .code = ERROR_DS18_ROM_ID,
+        .blinks = 5,
+    },
+    {
+        .code = ERROR_GME_INVALID_STR_LEN,
+        .blinks = 5,
+    },
+    {
+        .code = ERROR_GME_INVALID_CHAR,
+        .blinks = 5,
+    },
+    {
+        .code = ERROR_UNKNOWN,
+        .blinks = 5,
+    },
 };
 
 const char *_Error_Message_Lookup[] = {

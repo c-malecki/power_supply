@@ -9,5 +9,5 @@
 void Test_TemperatureSensor(App_t *app)
 {
     printf("Test_TemperatureSensor\n**********\r\n\n");
-    Temperature_Controller_Read(&app->temp_ctrl);
+    Temperature_Controller_Read(&app->temperature_controller);
 }
