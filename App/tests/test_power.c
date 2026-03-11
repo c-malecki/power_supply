@@ -23,85 +23,55 @@ void Test_VariableChannelLevels(App_t *app)
 {
     printf("Test_VariableChannelLevels\n**********\r\n");
 
-    Power_Controller_EnableChannel(&app->pwr_ctrl, POWER_CHANNEL_VARIABLE, true);
+    Power_Controller_EnableOut(&app->power_controller, POWER_CHANNEL_VARIABLE, true);
 
     // step up the voltage levels
-    Power_Controller_SetVariableVoltage_Result_t pwr_err = Power_Controller_SetVariableVoltage(
-        &app->pwr_ctrl, VOLTAGE_VARIABLE_MIN_WHOLE, VOLTAGE_VARIABLE_MIN_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_VARIABLE_MIN_WHOLE,
+                                VOLTAGE_VARIABLE_MIN_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err =
-        Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_3V3_WHOLE, VOLTAGE_3V3_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_3V3_WHOLE, VOLTAGE_3V3_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err =
-        Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_5V_WHOLE, VOLTAGE_5V_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_5V_WHOLE, VOLTAGE_5V_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err =
-        Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_9V_WHOLE, VOLTAGE_9V_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_9V_WHOLE, VOLTAGE_9V_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err =
-        Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_10V_WHOLE, VOLTAGE_10V_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_10V_WHOLE, VOLTAGE_10V_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err = Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE,
-                                                  VOLTAGE_VARIABLE_MAX_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_VARIABLE_MAX_WHOLE,
+                                VOLTAGE_VARIABLE_MAX_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
     // test moving from min to max to min
-    pwr_err = Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_VARIABLE_MIN_WHOLE,
-                                                  VOLTAGE_VARIABLE_MIN_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_VARIABLE_MIN_WHOLE,
+                                VOLTAGE_VARIABLE_MIN_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err = Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_VARIABLE_MAX_WHOLE,
-                                                  VOLTAGE_VARIABLE_MAX_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_VARIABLE_MAX_WHOLE,
+                                VOLTAGE_VARIABLE_MAX_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    pwr_err = Power_Controller_SetVariableVoltage(&app->pwr_ctrl, VOLTAGE_VARIABLE_MIN_WHOLE,
-                                                  VOLTAGE_VARIABLE_MIN_DECIMAL);
-    app->status.error_code = pwr_err.error;
-    app->status.peripheral = pwr_err.peripheral;
-    App_Status_Check(app);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+    Power_Controller_SetVoltage(&app->power_controller, VOLTAGE_VARIABLE_MIN_WHOLE,
+                                VOLTAGE_VARIABLE_MIN_DECIMAL);
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
     HAL_Delay(2000);
 
-    Power_Controller_EnableChannel(&app->pwr_ctrl, POWER_CHANNEL_VARIABLE, false);
+    Power_Controller_EnableOut(&app->power_controller, POWER_CHANNEL_VARIABLE, false);
     printf("channel enabled: %u\r\n",
-           app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE].output_enabled);
+           app->power_controller.channels[POWER_CHANNEL_VARIABLE].output_enabled);
     HAL_Delay(2000);
-    print_variable_channel(app->pwr_ctrl.channels[POWER_CHANNEL_VARIABLE]);
+
+    print_variable_channel(app->power_controller.channels[POWER_CHANNEL_VARIABLE]);
 }

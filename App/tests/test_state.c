@@ -36,7 +36,7 @@ void Test_PrintAppState(App_t *app)
 {
     printf("APP STATE\n**********\r\n");
     // TODO: print_display_controller_state
-    print_power_controller_state(&app->pwr_ctrl);
+    print_power_controller_state(&app->power_controller);
     // TODO: print_rotary_controller_state
-    print_temperature_controller_state(&app->temp_ctrl);
+    print_temperature_controller_state(&app->temperature_controller);
 }

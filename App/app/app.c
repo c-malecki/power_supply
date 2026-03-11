@@ -15,142 +15,110 @@
 #include "common.h"
 
 const char *_App_State_Lookup[] = {
-    "Init: Ping Peripherals", "Init: Init Controllers", "Init: Test Controllers",
-    "Run: Check Temperature", "Run: Check Power",
+    "Pre-Init",          "Init Controllers", "Test Controllers", "Start Master",
+    "Check Temperature", "Check Power",      "Check Display",
 };
 
-void ping_peripherals(App_t *app);
-void relay_enable_power(void);
 void init_controllers(App_t *app);
 void test_controllers(App_t *app);
 void check_temp(App_t *app);
 void check_power(App_t *app);
 void check_display(App_t *app);
 
-void App_Status_Check(App_t *app)
+void app_error_check(App_t *app)
 {
-    if (app->status.error_code == ERROR_NONE) {
-        app->DEBUG_MODE_ON = false;
+    if (app->error.code == ERROR_NONE) {
         return;
     }
 
-    printf("\nENTERING DEBUG MODE\n**********\r\n");
+    printf("\nENTERING DEBUG MODE\n**********\nApp State: %s\nController: %s\nPeripheral: "
+           "%s\nFunction: %s\nError: %s\r\n\n",
+           _App_State_Lookup[app->state], _Controller_Lookup[app->error.controller],
+           _Peripheral_Lookup[app->error.peripheral], _Function_Lookup[app->error.function],
+           _Error_Message_Lookup[app->error.code]);
 
-    app->DEBUG_MODE_ON = true;
-    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_COLOR_RED);
-
-    printf("Error:\nState: %s\nController: %s\nPeripheral: %s\nStatus:%s\r\n\n",
-           _App_State_Lookup[app->state], _Controller_Lookup[app->status.controller],
-           _Peripheral_Lookup[app->status.peripheral],
-           _Error_Message_Lookup[app->status.error_code]);
-
-    // uint32_t last = 0;
-    // int count = 0;
+    _Error_Blink_t blink = _Error_Blink_Lookup[app->error.code];
 
     while (1) {
-        // TODO: Blink LED_MAIN with error code
-        // if ((HAL_GetTick() - last) > 500) {
-        //     last = HAL_GetTick();
-        // }
+        for (uint8_t i = 0; i < app->error.peripheral; i++) {
+            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
+            HAL_Delay(1000);
+            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
+            HAL_Delay(1000);
+        }
+        HAL_Delay(1500);
+        for (uint8_t i = 0; i < blink.blinks; i++) {
+            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
+            HAL_Delay(500);
+            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
+            HAL_Delay(500);
+        }
+        HAL_Delay(1500);
     }
+}
+
+void error_callback(void *ctx, _Error_t error)
+{
+    App_t *app = (App_t *)ctx;
+    app->error.controller = error.controller;
+    app->error.peripheral = error.peripheral;
+    app->error.function = error.function;
+    app->error.code = error.code;
+    app_error_check(app);
 }
 
 void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 {
-    printf("APP INIT\n**********\r\n");
-
-    app->status.controller = CONTROLLER_NONE;
-    app->status.peripheral = PERIPHERAL_NONE;
-    app->status.error_code = ERROR_NONE;
-
     app->i2c_handle = i2c_handle;
 
-    LED_Controller_Init(&app->led_ctrl);
-    LED_Controller_SetLED(&app->led_ctrl, LED_STATUS, LED_COLOR_YELLOW);
+    app->display_controller.error_cb = error_callback;
+    app->display_controller.error_ctx = app;
 
-    app->state = APP_STATE_PING_PERIPHERALS;
-    ping_peripherals(app);
-    if (app->status.error_code != ERROR_NONE) {
-        App_Status_Check(app);
-    }
+    app->led_controller.error_cb = error_callback;
+    app->led_controller.error_ctx = app;
 
-    // if all peripherals respond, switch relay to let power to the output channels
-    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
+    app->power_controller.error_cb = error_callback;
+    app->power_controller.error_ctx = app;
+
+    app->rotary_controller.error_cb = error_callback;
+    app->rotary_controller.error_ctx = app;
+
+    app->temperature_controller.error_cb = error_callback;
+    app->temperature_controller.error_ctx = app;
 
     app->state = APP_STATE_INIT_CONTROLLERS;
     init_controllers(app);
-    if (app->status.error_code != ERROR_NONE) {
-        App_Status_Check(app);
-    }
 
-    app->state = APP_STATE_INIT_TEST_CONTROLLERS;
-    // test_controllers(app);
-    // if (app->status.error_code != ERROR_NONE) {
-    //     App_Status_Check(app);
-    // }
+    app->state = APP_STATE_TEST_CONTROLLERS;
+    test_controllers(app);
 
-    app->state = APP_STATE_CHECK_TEMPERATURE;
-}
+    LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_GREEN);
 
-void ping_peripherals(App_t *app)
-{
-    printf("ping_peripherals\n**********\r\n");
-
-    Power_Controller_Ping_Result_t pwr_res = Power_Controller_PingPeripherals(app->i2c_handle);
-    if (pwr_res.mcp != ERROR_NONE) {
-        app->status.error_code = pwr_res.mcp;
-        app->status.controller = CONTROLLER_POWER;
-        app->status.peripheral = PERIPHERAL_MCP;
-        return;
-    }
-    if (pwr_res.ina != ERROR_NONE) {
-        app->status.error_code = pwr_res.ina;
-        app->status.controller = CONTROLLER_POWER;
-        app->status.peripheral = PERIPHERAL_INA;
-        return;
-    }
-    printf("power: OK\r\n");
-
-    app->status.error_code = Display_Controller_PingPeripherals(app->i2c_handle);
-    if (app->status.error_code != ERROR_NONE) {
-        app->status.controller = CONTROLLER_DISPLAY;
-        app->status.peripheral = PERIPHERAL_GME;
-        return;
-    }
-    printf("display: OK\r\n");
-
-    // ds18 handle needs to be initialized first before ping since it doesn't
-    // use I2C like the other hardware modules
-    app->status.error_code = Temperature_Controller_Ping_And_Init(&app->temp_ctrl);
-    if (app->status.error_code != ERROR_NONE) {
-        app->status.controller = CONTROLLER_TEMPERATURE;
-        app->status.peripheral = PERIPHERAL_DS18;
-        return;
-    }
-    printf("temperature: OK\r\n\n");
+    app->state = APP_STATE_START_MASTER;
 }
 
 void init_controllers(App_t *app)
 {
-    printf("init_controllers\n**********\r\n");
+    // no ping involved for LEDs
+    LED_Controller_Init(&app->led_controller);
 
-    app->status.error_code = Power_Controller_Init(&app->pwr_ctrl, app->i2c_handle);
-    if (app->status.error_code != ERROR_NONE) {
-        app->status.controller = CONTROLLER_POWER;
-        return;
-    }
-    printf("power: OK\r\n");
+    Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
+    Power_Controller_PingINA(&app->power_controller, app->i2c_handle);
+    Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
 
-    // temp is initialized in the ping test
-    printf("temperature: OK\r\n");
+    // must be init to ping since it's not an I2C device
+    Temperature_Controller_Ping_And_Init(&app->temperature_controller);
 
-    Display_Controller_Init(&app->dsp_ctrl, app->i2c_handle);
-    printf("display: OK\r\n\n");
+    // if all peripherals respond, switch relay to enable power from other bucks to
+    // output channels
+    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
+
+    Power_Controller_Init(&app->power_controller, app->i2c_handle);
+    Display_Controller_Init(&app->display_controller, app->i2c_handle);
 }
 
 void test_controllers(App_t *app)
 {
-    printf("test_controllers\n**********\r\n");
     // test display, power, temperature, status controllers
 }
 
@@ -158,9 +126,10 @@ void App_Run(App_t *app)
 {
     switch (app->state) {
 
-    case APP_STATE_PING_PERIPHERALS:
+    case APP_STATE_PRE_INIT:
     case APP_STATE_INIT_CONTROLLERS:
-    case APP_STATE_INIT_TEST_CONTROLLERS:
+    case APP_STATE_TEST_CONTROLLERS:
+    case APP_STATE_START_MASTER:
         break;
 
     case APP_STATE_CHECK_TEMPERATURE:
@@ -177,36 +146,6 @@ void App_Run(App_t *app)
     }
 }
 
-// void check_temp(App_t *app) { }
+void check_temp(App_t *app) { }
 
-// void check_power(App_t *app)
-// {
-// if (app->pwr_ctrl->chan_3v3->output_enabled == 1) {
-//     if (!app->LED_3V3_ON)
-//         HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port,
-//         app->pwr_ctrl->chan_3v3->led_pin,
-//                           GPIO_PIN_SET);
-// } else {
-//     HAL_GPIO_WritePin(app->pwr_ctrl->chan_3v3->led_port, app->pwr_ctrl->chan_3v3->led_pin,
-//                       GPIO_PIN_RESET);
-// }
-
-// if (app->pwr_ctrl->chan_5v->output_enabled == 1) {
-//     if (!app->LED_5V_ON)
-//         HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
-//                           GPIO_PIN_SET);
-// } else {
-//     HAL_GPIO_WritePin(app->pwr_ctrl->chan_5v->led_port, app->pwr_ctrl->chan_5v->led_pin,
-//                       GPIO_PIN_RESET);
-// }
-
-// if (app->pwr_ctrl->chan_var->output_enabled == 1) {
-//     if (!app->LED_VAR_ON)
-//         HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port,
-//         app->pwr_ctrl->chan_var->led_pin,
-//                           GPIO_PIN_SET);
-// } else {
-//     HAL_GPIO_WritePin(app->pwr_ctrl->chan_var->led_port, app->pwr_ctrl->chan_var->led_pin,
-//                       GPIO_PIN_RESET);
-// }
-// }
+void check_power(App_t *app) { }

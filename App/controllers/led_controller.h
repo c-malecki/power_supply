@@ -3,6 +3,9 @@
 
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
+#include "common.h"
+
+typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 
 typedef struct
 {
@@ -60,6 +63,8 @@ typedef enum {
 typedef struct
 {
     Input_LED_t leds[4];
+    Error_Callback_t error_cb;
+    void *error_ctx;
 } LED_Controller_t;
 
 void LED_Controller_Init(LED_Controller_t *ctrl);

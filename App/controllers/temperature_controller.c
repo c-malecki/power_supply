@@ -63,7 +63,7 @@ _Error_Codes conv_ds18_error(ow_err_t ds18_error)
     return error;
 }
 
-_Error_Codes Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl)
+void Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl)
 {
     ow_init_t ow_init_struct;
     ow_init_struct.tim_handle = &htim9;
@@ -71,14 +71,16 @@ _Error_Codes Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl
     ow_init_struct.pin = DS18B20_S_Pin;
     ow_init_struct.tim_cb = ds18_tim_cb;
     ow_init_struct.done_cb = ds18_done_cb;
-    // ow_init_struct.rom_id_filter = DS18B20_ID;
 
     ds18b20_init(&ds18, &ow_init_struct);
 
-    // Update ROM IDs for all devices
-    _Error_Codes error = conv_ds18_error(ds18b20_update_rom_id(&ds18));
-    if (error != ERROR_NONE) {
-        return error;
+    _Error_Codes code = conv_ds18_error(ds18b20_update_rom_id(&ds18));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                    .peripheral = PERIPHERAL_DS18,
+                                    .code = code,
+                                    .function = FUNCTION_DS18_UPDATE_ROM });
     }
 
     while (ds18b20_is_busy(&ds18))
@@ -89,9 +91,13 @@ _Error_Codes Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl
                                    .alarm_low = -50,
                                    .cnv_bit = DS18B20_CNV_BIT_12 };
 
-    error = conv_ds18_error(ds18b20_conf(&ds18, &ds18_conf));
-    if (error != ERROR_NONE) {
-        return error;
+    code = conv_ds18_error(ds18b20_conf(&ds18, &ds18_conf));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                    .peripheral = PERIPHERAL_DS18,
+                                    .code = code,
+                                    .function = FUNCTION_DS18_CONF });
     }
 
     while (ds18b20_is_busy(&ds18))
@@ -100,26 +106,30 @@ _Error_Codes Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl
     ctrl->ds18 = ds18;
 
     t_ctrl = ctrl;
-
-    return ERROR_NONE;
 }
 
-_Error_Codes Temperature_Controller_Read(Temperature_Controller_t *ctrl)
+void Temperature_Controller_Read(Temperature_Controller_t *ctrl)
 {
-    _Error_Codes error = conv_ds18_error(ds18b20_cnv(&ctrl->ds18));
-    if (error != ERROR_NONE) {
-        return error;
+    _Error_Codes code = conv_ds18_error(ds18b20_cnv(&ctrl->ds18));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                    .peripheral = PERIPHERAL_DS18,
+                                    .code = code,
+                                    .function = FUNCTION_DS18_CNV });
     }
 
     while (ds18b20_is_busy(&ctrl->ds18)) { };
     while (!ds18b20_is_cnv_done(&ctrl->ds18)) { };
 
-    error = conv_ds18_error(ds18b20_req_read(&ctrl->ds18));
-    if (error != ERROR_NONE) {
-        return error;
+    code = conv_ds18_error(ds18b20_req_read(&ctrl->ds18));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                    .peripheral = PERIPHERAL_DS18,
+                                    .code = code,
+                                    .function = FUNCTION_DS18_CNV });
     }
 
     while (ds18b20_is_busy(&ctrl->ds18)) { };
-
-    return ERROR_NONE;
 }

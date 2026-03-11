@@ -6,7 +6,7 @@ A digitally controlled variable bench power supply unit with fixed and variable 
 
 ## Post-Phase Write-ups
 
-I would consider there to be 3 major "phases" of this project, of which I have/will be creating a write-up for to reflect on the challenges I faced and evaluate the solutions I used, as well as what I learned overall about developing an embedded project.
+I would consider there to be 3 major "phases" of this project, of which I have/will be creating a write-up for each to reflect on the challenges I faced, evaluate the solutions I used, and overarching lessons about embedded systems development.
 
 1. [Discovery Phase](./docs/writeup/discovery.md)
 2. [Hardware Phase](./docs/writeup/hardware.md)
@@ -23,7 +23,7 @@ Designing and building my own tools seemed like a great way to learn since the s
 
 ## Planned Features
 
-- Variable output channel: 3V3 to 12V
+- Variable output channel: 2V to 12V
 - Fixed 3V3 output channel
 - Fixed 5V output channel
 - OLED display: simple UI for readings or functionality selection

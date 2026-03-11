@@ -65,6 +65,8 @@ void LED_Controller_Init(LED_Controller_t *ctrl)
         HAL_TIM_PWM_Start(ctrl->leds[i].g_htim, ctrl->leds[i].g_timch);
         HAL_TIM_PWM_Start(ctrl->leds[i].b_htim, ctrl->leds[i].b_timch);
     }
+
+    LED_Controller_SetLED(ctrl, LED_STATUS, LED_COLOR_YELLOW);
 }
 
 void LED_Controller_SetLED(LED_Controller_t *ctrl, Input_LEDs led, Input_LED_Color_t color)
