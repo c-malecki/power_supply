@@ -5,6 +5,7 @@
 
 void Test_Display(App_t *app);
 void Test_LEDs(App_t *app);
+void Test_Power_VoltageCurrent(App_t *app);
 void Test_VariableChannelLevels(App_t *app);
 void Test_TemperatureSensor(App_t *app);
 void Test_PrintAppState(App_t *app);

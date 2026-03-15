@@ -89,6 +89,10 @@ typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
     Power_Controller_Channel_t channels[3];
+    int32_t main_voltage_whole;
+    uint32_t main_voltage_decimal;
+    int32_t main_current_whole;
+    uint32_t main_current_decimal;
     Error_Callback_t error_cb;
     void *error_ctx;
 } Power_Controller_t;
@@ -97,10 +101,12 @@ void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
 void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 
+void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl);
+
 void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
 void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
                                  uint32_t target_voltage_decimal);
-void Power_Controller_UpdateCurValues(Power_Controller_t *ctrl);
+void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl);
 
 void Power_Controller_PrintState(Power_Controller_t *ctrl);
 

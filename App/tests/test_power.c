@@ -1,11 +1,31 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include "stm32f4xx_hal.h"
 //
 #include "app.h"
 #include "power_controller.h"
 #include "tests.h"
 #include "common.h"
+
+void Test_Power_VoltageCurrent(App_t *app)
+{
+    HAL_Delay(2000);
+
+    printf("Test_Power_VoltageCurrent\n**********\r\n");
+
+    Power_Controller_UpdateMainValues(&app->power_controller);
+    printf("INA Main:\nVoltage: %" PRId32 ".%" PRIu32 "V\nCurrent: %" PRId32 ".%" PRIu32 "V\r\n\n",
+           app->power_controller.main_voltage_whole, app->power_controller.main_voltage_decimal,
+           app->power_controller.main_current_whole, app->power_controller.main_current_decimal);
+
+    Power_Controller_UpdateVarValues(&app->power_controller);
+    printf("INA Var:\nVoltage: %" PRId32 ".%" PRIu32 "V\nCurrent: %" PRId32 ".%" PRIu32 "V\r\n\n",
+           app->power_controller.channels[POWER_CHANNEL_VARIABLE].variable.cur_voltage_whole,
+           app->power_controller.channels[POWER_CHANNEL_VARIABLE].variable.cur_voltage_decimal,
+           app->power_controller.channels[POWER_CHANNEL_VARIABLE].variable.cur_current_whole,
+           app->power_controller.channels[POWER_CHANNEL_VARIABLE].variable.cur_current_decimal);
+}
 
 void print_variable_channel(Power_Controller_Channel_t channel)
 {

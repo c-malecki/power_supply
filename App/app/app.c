@@ -37,23 +37,23 @@ void app_error_check(App_t *app)
            _Peripheral_Lookup[app->error.peripheral], _Function_Lookup[app->error.function],
            _Error_Message_Lookup[app->error.code]);
 
-    _Error_Blink_t blink = _Error_Blink_Lookup[app->error.code];
+    // _Error_Blink_t blink = _Error_Blink_Lookup[app->error.code];
 
     while (1) {
-        for (uint8_t i = 0; i < app->error.peripheral; i++) {
-            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
-            HAL_Delay(1000);
-            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
-            HAL_Delay(1000);
-        }
-        HAL_Delay(1500);
-        for (uint8_t i = 0; i < blink.blinks; i++) {
-            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
-            HAL_Delay(500);
-            LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
-            HAL_Delay(500);
-        }
-        HAL_Delay(1500);
+        // for (uint8_t i = 0; i < app->error.peripheral; i++) {
+        //     LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
+        //     HAL_Delay(1000);
+        //     LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
+        //     HAL_Delay(1000);
+        // }
+        // HAL_Delay(1500);
+        // for (uint8_t i = 0; i < blink.blinks; i++) {
+        //     LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_RED);
+        //     HAL_Delay(500);
+        //     LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_OFF);
+        //     HAL_Delay(500);
+        // }
+        // HAL_Delay(1500);
     }
 }
 
@@ -92,7 +92,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     app->state = APP_STATE_TEST_CONTROLLERS;
     test_controllers(app);
 
-    LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_GREEN);
+    // LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_GREEN);
 
     app->state = APP_STATE_START_MASTER;
 }
@@ -100,7 +100,7 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 void init_controllers(App_t *app)
 {
     // no ping involved for LEDs
-    LED_Controller_Init(&app->led_controller);
+    // LED_Controller_Init(&app->led_controller);
 
     Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
     Power_Controller_PingINA(&app->power_controller, app->i2c_handle);
@@ -111,7 +111,7 @@ void init_controllers(App_t *app)
 
     // if all peripherals respond, switch relay to enable power from other bucks to
     // output channels
-    HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_SET);
 
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
     Display_Controller_Init(&app->display_controller, app->i2c_handle);

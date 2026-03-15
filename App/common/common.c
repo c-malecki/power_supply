@@ -10,7 +10,7 @@ const char *_Controller_Lookup[] = {
 };
 
 const char *_Peripheral_Lookup[] = {
-    "Not Specified", "MCP4725", "INA219", "GME12864-13", "DS18B20",
+    "Not Specified", "MCP4725", "INA219 Main", "INA219 Var", "GME12864-13", "DS18B20",
 };
 
 const char *_Function_Lookup[] = { "Not Specified",    "INA Ping",       "MCP Ping",

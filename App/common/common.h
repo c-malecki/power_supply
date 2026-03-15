@@ -17,7 +17,8 @@ extern const char *_Controller_Lookup[];
 typedef enum {
     PERIPHERAL_NONE = 0,
     PERIPHERAL_MCP,
-    PERIPHERAL_INA,
+    PERIPHERAL_INA_MAIN,
+    PERIPHERAL_INA_VAR,
     PERIPHERAL_GME,
     PERIPHERAL_DS18,
 } _Peripherals;

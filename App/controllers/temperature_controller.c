@@ -25,7 +25,7 @@ void ds18_done_cb(ow_err_t err)
         t_ctrl->cur_temp = new_temp;
 
         if (new_temp >= TEMP_CRITICAL) {
-            HAL_GPIO_WritePin(RELAY_CHAN_PWR_GPIO_Port, RELAY_CHAN_PWR_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_RESET);
         }
 
         temp_ready = true;
@@ -67,8 +67,8 @@ void Temperature_Controller_Ping_And_Init(Temperature_Controller_t *ctrl)
 {
     ow_init_t ow_init_struct;
     ow_init_struct.tim_handle = &htim9;
-    ow_init_struct.gpio = DS18B20_S_GPIO_Port;
-    ow_init_struct.pin = DS18B20_S_Pin;
+    ow_init_struct.gpio = GPIO_TEMP_S_GPIO_Port;
+    ow_init_struct.pin = GPIO_TEMP_S_Pin;
     ow_init_struct.tim_cb = ds18_tim_cb;
     ow_init_struct.done_cb = ds18_done_cb;
 
