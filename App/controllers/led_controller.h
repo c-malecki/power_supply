@@ -22,24 +22,14 @@ extern const Input_LED_Color_t LED_OFF;
 
 /*
     main debug led
-        red TIM1_CH2
-        green TIM1_CH1
-        blue TIM1_CH3
-
-    3V3 power channel LED
-        red TIM2_CH3
-        green TIM5_CH4
-        blue TIM5_CH3
-
-    5V power channel LED
-        red TIM2_CH1
-        green TIM2_CH2
-        blue TIM3_CH1
+        red TIM2_CH2
+        green TIM2_CH3
+        blue TIM2_CH4
 
     variable power channel LED
-        red TIM3_CH2
+        red TIM4_CH2
         green TIM4_CH1
-        blue TIM4_CH2
+        blue TIM3_CH2
 */
 
 typedef struct

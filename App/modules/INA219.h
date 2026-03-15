@@ -5,7 +5,8 @@
 #include <stdint.h>
 #include "common.h"
 
-#define INA_I2C_ADDRESS 0x40 << 1
+#define INA_I2C_ADDRESS_MAIN (0x41 << 1)
+#define INA_I2C_ADDRESS_VAR (0x40 << 1)
 
 #define INA_VOLTAGE_REGISTER 0x02
 #define INA_CURRENT_REGISTER 0x04
@@ -19,8 +20,8 @@ typedef struct
     uint32_t decimal;
 } INA_Result_t;
 
-_Error_Codes INA_Init(I2C_HandleTypeDef *i2c_handle);
-INA_Result_t INA_Read_Voltage(I2C_HandleTypeDef *i2c_handle);
-INA_Result_t INA_Read_Current(I2C_HandleTypeDef *i2c_handle);
+_Error_Codes INA_Init(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
+INA_Result_t INA_Read_Voltage(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
+INA_Result_t INA_Read_Current(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
 
 #endif

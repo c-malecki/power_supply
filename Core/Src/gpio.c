@@ -51,59 +51,61 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, NC_Pin|NCA1_Pin|NCA11_Pin|NCA12_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, NC_Pin|NCA1_Pin|NCA2_Pin|NCA3_Pin
+                          |NCA8_Pin|GPIO_LED_3V3_Pin|GPIO_LED_5V_Pin|NCA11_Pin
+                          |NCA12_Pin|NCA15_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|RELAY_CHAN_PWR_Pin|NCB2_Pin|DS18B20_S_Pin
-                          |MOSFET_CHAN_3V3_Pin|MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|GPIO_RELAY_S_Pin|GPIO_TEMP_S_Pin|NCB10_Pin
+                          |NCB12_Pin|GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin
+                          |NCB3_Pin|NCB5_Pin|NCB6_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BTN_CHAN_3V3_Pin BTN_CHAN_5V_Pin BTN_CHAN_VAR_Pin */
-  GPIO_InitStruct.Pin = BTN_CHAN_3V3_Pin|BTN_CHAN_5V_Pin|BTN_CHAN_VAR_Pin;
+  /*Configure GPIO pins : GPIO_BTN_3V3_Pin GPIO_BTN_5V_Pin GPIO_BTN_VAR_Pin */
+  GPIO_InitStruct.Pin = GPIO_BTN_3V3_Pin|GPIO_BTN_5V_Pin|GPIO_BTN_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : NC_Pin */
-  GPIO_InitStruct.Pin = NC_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(NC_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : NCA1_Pin NCA11_Pin NCA12_Pin */
-  GPIO_InitStruct.Pin = NCA1_Pin|NCA11_Pin|NCA12_Pin;
+  /*Configure GPIO pins : NC_Pin NCA1_Pin NCA2_Pin NCA3_Pin
+                           NCA8_Pin GPIO_LED_3V3_Pin GPIO_LED_5V_Pin NCA11_Pin
+                           NCA12_Pin NCA15_Pin */
+  GPIO_InitStruct.Pin = NC_Pin|NCA1_Pin|NCA2_Pin|NCA3_Pin
+                          |NCA8_Pin|GPIO_LED_3V3_Pin|GPIO_LED_5V_Pin|NCA11_Pin
+                          |NCA12_Pin|NCA15_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BTN_DSP_MENU_Pin RTRY_DT_Pin */
-  GPIO_InitStruct.Pin = BTN_DSP_MENU_Pin|RTRY_DT_Pin;
+  /*Configure GPIO pins : GPIO_BTN_MENU_Pin GPIO_RTRY_DT_Pin */
+  GPIO_InitStruct.Pin = GPIO_BTN_MENU_Pin|GPIO_RTRY_DT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RTRY_SW_Pin RTRY_CLK_Pin */
-  GPIO_InitStruct.Pin = RTRY_SW_Pin|RTRY_CLK_Pin;
+  /*Configure GPIO pins : GPIO_RTRY_SW_Pin GPIO_RTRY_CLK_Pin */
+  GPIO_InitStruct.Pin = GPIO_RTRY_SW_Pin|GPIO_RTRY_CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NCB0_Pin RELAY_CHAN_PWR_Pin NCB2_Pin MOSFET_CHAN_3V3_Pin
-                           MOSFET_CHAN_5V_Pin MOSFET_CHAN_VAR_Pin */
-  GPIO_InitStruct.Pin = NCB0_Pin|RELAY_CHAN_PWR_Pin|NCB2_Pin|MOSFET_CHAN_3V3_Pin
-                          |MOSFET_CHAN_5V_Pin|MOSFET_CHAN_VAR_Pin;
+  /*Configure GPIO pins : NCB0_Pin GPIO_RELAY_S_Pin NCB10_Pin NCB12_Pin
+                           GPIO_MOSFET_3V3_Pin GPIO_MOSFET_5V_Pin GPIO_MOSFET_VAR_Pin NCB3_Pin
+                           NCB5_Pin NCB6_Pin */
+  GPIO_InitStruct.Pin = NCB0_Pin|GPIO_RELAY_S_Pin|NCB10_Pin|NCB12_Pin
+                          |GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin|NCB3_Pin
+                          |NCB5_Pin|NCB6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : DS18B20_S_Pin */
-  GPIO_InitStruct.Pin = DS18B20_S_Pin;
+  /*Configure GPIO pin : GPIO_TEMP_S_Pin */
+  GPIO_InitStruct.Pin = GPIO_TEMP_S_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DS18B20_S_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIO_TEMP_S_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);

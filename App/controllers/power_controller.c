@@ -14,8 +14,8 @@
 
 static const Power_Controller_Channel_t channel_3v3_default = {
     .channel_type = CHANNEL_TYPE_FIXED,
-    .mosfet_pin = MOSFET_CHAN_3V3_Pin,
-    .mosfet_port = MOSFET_CHAN_3V3_GPIO_Port,
+    .mosfet_pin = GPIO_MOSFET_3V3_Pin,
+    .mosfet_port = GPIO_MOSFET_3V3_GPIO_Port,
     .output_enabled = false,
     .target_voltage_whole = VOLTAGE_3V3_WHOLE,
     .target_voltage_decimal = VOLTAGE_3V3_DECIMAL
@@ -23,8 +23,8 @@ static const Power_Controller_Channel_t channel_3v3_default = {
 
 static const Power_Controller_Channel_t channel_5v_default = {
     .channel_type = CHANNEL_TYPE_FIXED,
-    .mosfet_pin = MOSFET_CHAN_5V_Pin,
-    .mosfet_port = MOSFET_CHAN_5V_GPIO_Port,
+    .mosfet_pin = GPIO_MOSFET_5V_Pin,
+    .mosfet_port = GPIO_MOSFET_5V_GPIO_Port,
     .output_enabled = false,
     .target_voltage_whole = VOLTAGE_5V_WHOLE,
     .target_voltage_decimal = VOLTAGE_5V_DECIMAL
@@ -33,10 +33,10 @@ static const Power_Controller_Channel_t channel_5v_default = {
 static const Power_Controller_Channel_t channel_var_default = {
     .output_enabled         = false,
     .channel_type           = CHANNEL_TYPE_VARIABLE,
-    .mosfet_pin             = MOSFET_CHAN_VAR_Pin,
+    .mosfet_pin             = GPIO_MOSFET_VAR_Pin,
     .target_voltage_whole   = VOLTAGE_VARIABLE_MIN_WHOLE,
     .target_voltage_decimal = VOLTAGE_VARIABLE_MIN_DECIMAL,
-    .mosfet_port            = MOSFET_CHAN_VAR_GPIO_Port,
+    .mosfet_port            = GPIO_MOSFET_VAR_GPIO_Port,
     .variable               = {
                       .adjustment_state    = {0},
                       .cur_dac_steps       = 0,
@@ -56,11 +56,21 @@ static const Power_Controller_Channel_t channel_var_default = {
 
 void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS, 3, 100));
+    _Error_Codes code =
+        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_MAIN, 3, 100));
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA,
+                                    .peripheral = PERIPHERAL_INA_MAIN,
+                                    .code = code,
+                                    .function = FUNCTION_INA_PING });
+    }
+
+    code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_VAR, 3, 100));
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_POWER,
+                                    .peripheral = PERIPHERAL_INA_VAR,
                                     .code = code,
                                     .function = FUNCTION_INA_PING });
     }
@@ -85,14 +95,48 @@ void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_hand
     ctrl->channels[POWER_CHANNEL_5V] = channel_5v_default;
     ctrl->channels[POWER_CHANNEL_VARIABLE] = channel_var_default;
 
-    _Error_Codes code = INA_Init(i2c_handle);
+    _Error_Codes code = INA_Init(INA_I2C_ADDRESS_MAIN, i2c_handle);
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA,
+                                    .peripheral = PERIPHERAL_INA_MAIN,
                                     .code = code,
                                     .function = FUNCTION_INA_INIT });
     }
+
+    code = INA_Init(INA_I2C_ADDRESS_VAR, i2c_handle);
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_POWER,
+                                    .peripheral = PERIPHERAL_INA_VAR,
+                                    .code = code,
+                                    .function = FUNCTION_INA_INIT });
+    }
+}
+
+void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl)
+{
+    INA_Result_t result = INA_Read_Voltage(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
+    if (result.code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_POWER,
+                                    .peripheral = PERIPHERAL_INA_MAIN,
+                                    .code = result.code,
+                                    .function = FUNCTION_INA_READ_V });
+    }
+    ctrl->main_voltage_whole = result.whole;
+    ctrl->main_voltage_decimal = result.decimal;
+
+    result = INA_Read_Current(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
+    if (result.code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_POWER,
+                                    .peripheral = PERIPHERAL_INA_MAIN,
+                                    .code = result.code,
+                                    .function = FUNCTION_INA_READ_I });
+    }
+    ctrl->main_current_whole = result.whole;
+    ctrl->main_current_decimal = result.decimal;
 }
 
 void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
@@ -115,7 +159,7 @@ void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltag
     if (result.code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA,
+                                    .peripheral = PERIPHERAL_INA_VAR,
                                     .code = result.code,
                                     .function = FUNCTION_MCP_SETSTEPS });
     }
@@ -130,29 +174,29 @@ void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltag
     // TODO: make software interrupt instead of blocking delay
     HAL_Delay(350);
 
-    Power_Controller_UpdateCurValues(ctrl);
+    Power_Controller_UpdateVarValues(ctrl);
 }
 
-void Power_Controller_UpdateCurValues(Power_Controller_t *ctrl)
+void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl)
 {
     Power_Controller_Channel_t *chan = &ctrl->channels[POWER_CHANNEL_VARIABLE];
 
-    INA_Result_t result = INA_Read_Voltage(ctrl->i2c_handle);
+    INA_Result_t result = INA_Read_Voltage(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
     if (result.code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA,
+                                    .peripheral = PERIPHERAL_INA_VAR,
                                     .code = result.code,
                                     .function = FUNCTION_INA_READ_V });
     }
     chan->variable.cur_voltage_whole = result.whole;
     chan->variable.cur_voltage_decimal = result.decimal;
 
-    result = INA_Read_Current(ctrl->i2c_handle);
+    result = INA_Read_Current(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
     if (result.code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA,
+                                    .peripheral = PERIPHERAL_INA_VAR,
                                     .code = result.code,
                                     .function = FUNCTION_INA_READ_I });
     }
@@ -183,7 +227,7 @@ void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels channel
     }
 
     chan->output_enabled = enabled;
-    Power_Controller_UpdateCurValues(ctrl);
+    Power_Controller_UpdateVarValues(ctrl);
 }
 
 // static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
