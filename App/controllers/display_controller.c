@@ -105,10 +105,10 @@ void Display_Controller_ShowVariableChannel(Display_Controller_t *ctrl, int32_t 
 {
     char buf[DISPLAY_BLUE_MAX_CHAR + 1];
 
-    snprintf(buf, sizeof(buf), "%" PRId32 ".%" PRIu32 "V", voltage_whole, voltage_decimal);
+    snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "V", voltage_whole, voltage_decimal);
     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_TOP);
 
-    snprintf(buf, sizeof(buf), "%" PRId32 ".%" PRIu32 "mA", current_whole, current_decimal);
+    snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "mA", current_whole, current_decimal);
     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_BOT);
 }
 

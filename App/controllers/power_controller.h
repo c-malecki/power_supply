@@ -7,25 +7,13 @@
 #include "MCP4725.h"
 #include "common.h"
 
-#define VOLTAGE_VARIABLE_MIN_WHOLE 2
+#define VOLTAGE_VARIABLE_MIN_WHOLE 6
 #define VOLTAGE_VARIABLE_MIN_DECIMAL 0
 
-#define VOLTAGE_VARIABLE_MAX_WHOLE 12
+#define VOLTAGE_VARIABLE_MAX_WHOLE 15
 #define VOLTAGE_VARIABLE_MAX_DECIMAL 0
 
 #define VARIABLE_VOLTAGE_TOLLERANCE 0.05f
-
-#define VOLTAGE_3V3_WHOLE 3
-#define VOLTAGE_3V3_DECIMAL 3
-
-#define VOLTAGE_5V_WHOLE 5
-#define VOLTAGE_5V_DECIMAL 0
-
-#define VOLTAGE_9V_WHOLE 9
-#define VOLTAGE_9V_DECIMAL 0
-
-#define VOLTAGE_10V_WHOLE 10
-#define VOLTAGE_10V_DECIMAL 0
 
 typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 
@@ -97,7 +85,8 @@ typedef struct
     void *error_ctx;
 } Power_Controller_t;
 
-void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_PingMainINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_PingVarINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 

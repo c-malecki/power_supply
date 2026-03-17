@@ -16,9 +16,9 @@ void print_power_controller_state(Power_Controller_t *ctrl)
            "3V3 enabled: %u\n"
            "5V enabled: %u\n"
            "VARIABLE enabled: %u\n"
-           "target_voltage: %" PRId32 ".%" PRIu32 "\n"
-           "cur_voltage: %" PRId32 ".%" PRIu32 "\n"
-           "cur_current: %" PRId32 ".%" PRIu32 "\n"
+           "target_voltage: %" PRId32 ".%03" PRIu32 "\n"
+           "cur_voltage: %" PRId32 ".%03" PRIu32 "\n"
+           "cur_current: %" PRId32 ".%03" PRIu32 "\n"
            "cur_dac_steps: %u\r\n\n",
            chan3v3.output_enabled, chan5v.output_enabled, chanVar.output_enabled,
            chanVar.target_voltage_whole, chanVar.target_voltage_decimal,
