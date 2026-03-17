@@ -12,23 +12,21 @@
 #include "common.h"
 #include "power_controller.h"
 
-static const Power_Controller_Channel_t channel_3v3_default = {
-    .channel_type = CHANNEL_TYPE_FIXED,
-    .mosfet_pin = GPIO_MOSFET_3V3_Pin,
-    .mosfet_port = GPIO_MOSFET_3V3_GPIO_Port,
-    .output_enabled = false,
-    .target_voltage_whole = VOLTAGE_3V3_WHOLE,
-    .target_voltage_decimal = VOLTAGE_3V3_DECIMAL
-};
+static const Power_Controller_Channel_t channel_3v3_default = { .channel_type = CHANNEL_TYPE_FIXED,
+                                                                .mosfet_pin = GPIO_MOSFET_3V3_Pin,
+                                                                .mosfet_port =
+                                                                    GPIO_MOSFET_3V3_GPIO_Port,
+                                                                .output_enabled = false,
+                                                                .target_voltage_whole = 3,
+                                                                .target_voltage_decimal = 3 };
 
-static const Power_Controller_Channel_t channel_5v_default = {
-    .channel_type = CHANNEL_TYPE_FIXED,
-    .mosfet_pin = GPIO_MOSFET_5V_Pin,
-    .mosfet_port = GPIO_MOSFET_5V_GPIO_Port,
-    .output_enabled = false,
-    .target_voltage_whole = VOLTAGE_5V_WHOLE,
-    .target_voltage_decimal = VOLTAGE_5V_DECIMAL
-};
+static const Power_Controller_Channel_t channel_5v_default = { .channel_type = CHANNEL_TYPE_FIXED,
+                                                               .mosfet_pin = GPIO_MOSFET_5V_Pin,
+                                                               .mosfet_port =
+                                                                   GPIO_MOSFET_5V_GPIO_Port,
+                                                               .output_enabled = false,
+                                                               .target_voltage_whole = 5,
+                                                               .target_voltage_decimal = 0 };
 
 static const Power_Controller_Channel_t channel_var_default = {
     .output_enabled         = false,
@@ -54,7 +52,7 @@ static const Power_Controller_Channel_t channel_var_default = {
             },
     }};
 
-void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Power_Controller_PingMainINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
     _Error_Codes code =
         ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_MAIN, 3, 100));
@@ -65,8 +63,12 @@ void Power_Controller_PingINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
                                     .code = code,
                                     .function = FUNCTION_INA_PING });
     }
+}
 
-    code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_VAR, 3, 100));
+void Power_Controller_PingVarINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+{
+    _Error_Codes code =
+        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_VAR, 3, 100));
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
@@ -95,7 +97,7 @@ void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_hand
     ctrl->channels[POWER_CHANNEL_5V] = channel_5v_default;
     ctrl->channels[POWER_CHANNEL_VARIABLE] = channel_var_default;
 
-    _Error_Codes code = INA_Init(INA_I2C_ADDRESS_MAIN, i2c_handle);
+    _Error_Codes code = INA_Init(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
@@ -104,7 +106,7 @@ void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_hand
                                     .function = FUNCTION_INA_INIT });
     }
 
-    code = INA_Init(INA_I2C_ADDRESS_VAR, i2c_handle);
+    code = INA_Init(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
@@ -155,13 +157,13 @@ void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltag
     }
 
     MCP_Result_t result =
-        MCP_SetSteps(ctrl->i2c_handle, target_voltage_whole, target_voltage_decimal);
+        MCP_VoltageToSteps(ctrl->i2c_handle, target_voltage_whole, target_voltage_decimal);
     if (result.code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
                                     .peripheral = PERIPHERAL_INA_VAR,
                                     .code = result.code,
-                                    .function = FUNCTION_MCP_SETSTEPS });
+                                    .function = FUNCTION_MCP_VoltageToSteps });
     }
 
     chan->target_voltage_whole = target_voltage_whole;
@@ -284,7 +286,7 @@ Consider deadband to prevent oscillation:
 //         dac_steps = 3250;
 //     }
 
-//     err = MCP_SetSteps(i2c_handle, (uint16_t)dac_steps);
+//     err = MCP_VoltageToSteps(i2c_handle, (uint16_t)dac_steps);
 //     if (err != ERROR_NONE) {
 //         return err;
 //     }
