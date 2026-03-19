@@ -88,8 +88,8 @@ void Error_Handler(void);
 #define NCB0_GPIO_Port GPIOB
 #define GPIO_RELAY_S_Pin GPIO_PIN_1
 #define GPIO_RELAY_S_GPIO_Port GPIOB
-#define GPIO_TEMP_S_Pin GPIO_PIN_2
-#define GPIO_TEMP_S_GPIO_Port GPIOB
+#define NCB2_Pin GPIO_PIN_2
+#define NCB2_GPIO_Port GPIOB
 #define NCB10_Pin GPIO_PIN_10
 #define NCB10_GPIO_Port GPIOB
 #define NCB12_Pin GPIO_PIN_12
@@ -112,16 +112,16 @@ void Error_Handler(void);
 #define NCA12_GPIO_Port GPIOA
 #define NCA15_Pin GPIO_PIN_15
 #define NCA15_GPIO_Port GPIOA
-#define NCB3_Pin GPIO_PIN_3
-#define NCB3_GPIO_Port GPIOB
+#define PWM_LED_Pin GPIO_PIN_3
+#define PWM_LED_GPIO_Port GPIOB
 #define PWM_FAN_Pin GPIO_PIN_4
 #define PWM_FAN_GPIO_Port GPIOB
 #define NCB5_Pin GPIO_PIN_5
 #define NCB5_GPIO_Port GPIOB
-#define NCB6_Pin GPIO_PIN_6
-#define NCB6_GPIO_Port GPIOB
-#define PWM_LED_Pin GPIO_PIN_7
-#define PWM_LED_GPIO_Port GPIOB
+#define GPIO_DS18B20_Pin GPIO_PIN_6
+#define GPIO_DS18B20_GPIO_Port GPIOB
+#define NCB7_Pin GPIO_PIN_7
+#define NCB7_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

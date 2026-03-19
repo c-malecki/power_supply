@@ -33,7 +33,7 @@ typedef enum {
     FUNCTION_INA_INIT,
     FUNCTION_INA_READ_V,
     FUNCTION_INA_READ_I,
-    FUNCTION_MCP_VoltageToSteps,
+    FUNCTION_MCP_V_TO_S,
     FUNCTION_GME_WRITE_YELLOW,
     FUNCTION_GME_WRITE_BLUE,
     FUNCTION_GME_WRITE_CHAR,
@@ -41,6 +41,7 @@ typedef enum {
     FUNCTION_DS18_CONF,
     FUNCTION_DS18_CNV,
     FUNCTION_DS18_REQ_READ,
+    FUNCTION_DS18_READ
 } _Functions;
 
 extern const char *_Function_Lookup[];

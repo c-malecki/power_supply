@@ -163,7 +163,7 @@ void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltag
                        (_Error_t) { .controller = CONTROLLER_POWER,
                                     .peripheral = PERIPHERAL_INA_VAR,
                                     .code = result.code,
-                                    .function = FUNCTION_MCP_VoltageToSteps });
+                                    .function = FUNCTION_MCP_V_TO_S });
     }
 
     chan->target_voltage_whole = target_voltage_whole;
