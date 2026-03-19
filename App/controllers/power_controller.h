@@ -52,6 +52,7 @@ typedef enum {
 
 typedef struct
 {
+    bool output_pending;
     bool output_enabled;
     Power_Channel_Types channel_type;
     uint16_t mosfet_pin;
@@ -92,7 +93,7 @@ void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_hand
 
 void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl);
 
-void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels chan, bool enabled);
+void Power_Controller_ToggleOut(Power_Controller_t *ctrl, Power_Channels chan);
 void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
                                  uint32_t target_voltage_decimal);
 void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl);

@@ -12,23 +12,26 @@
 #include "common.h"
 #include "power_controller.h"
 
-static const Power_Controller_Channel_t channel_3v3_default = { .channel_type = CHANNEL_TYPE_FIXED,
+static const Power_Controller_Channel_t channel_3v3_default = { .output_pending = false,
+                                                                .output_enabled = false,
+                                                                .channel_type = CHANNEL_TYPE_FIXED,
                                                                 .mosfet_pin = GPIO_MOSFET_3V3_Pin,
                                                                 .mosfet_port =
                                                                     GPIO_MOSFET_3V3_GPIO_Port,
-                                                                .output_enabled = false,
                                                                 .target_voltage_whole = 3,
                                                                 .target_voltage_decimal = 3 };
 
-static const Power_Controller_Channel_t channel_5v_default = { .channel_type = CHANNEL_TYPE_FIXED,
+static const Power_Controller_Channel_t channel_5v_default = { .output_pending = false,
+                                                               .output_enabled = false,
+                                                               .channel_type = CHANNEL_TYPE_FIXED,
                                                                .mosfet_pin = GPIO_MOSFET_5V_Pin,
                                                                .mosfet_port =
                                                                    GPIO_MOSFET_5V_GPIO_Port,
-                                                               .output_enabled = false,
                                                                .target_voltage_whole = 5,
                                                                .target_voltage_decimal = 0 };
 
-static const Power_Controller_Channel_t channel_var_default = {
+static const Power_Controller_Channel_t channel_var_default = { 
+    .output_pending         = false,
     .output_enabled         = false,
     .channel_type           = CHANNEL_TYPE_VARIABLE,
     .mosfet_pin             = GPIO_MOSFET_VAR_Pin,
@@ -170,13 +173,11 @@ void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltag
     chan->target_voltage_decimal = target_voltage_decimal;
     chan->variable.cur_dac_steps = result.steps;
 
-    // this is to give enough time for the voltage to rise/fall
-    // TODO: retest time it takes after redoing routing
-    // TODO: retest when everything is working and load is connected
-    // TODO: make software interrupt instead of blocking delay
-    HAL_Delay(350);
+    // TODO: need a software interrupt or someway to set a timer to call updatevarvalues
+    // chan->variable.adjustment_state.state = SETTLING;
+    // HAL_Delay(350);
 
-    Power_Controller_UpdateVarValues(ctrl);
+    // Power_Controller_UpdateVarValues(ctrl);
 }
 
 void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl)
@@ -206,11 +207,11 @@ void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl)
     chan->variable.cur_current_decimal = result.decimal;
 }
 
-void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels channel, bool enabled)
+void Power_Controller_ToggleOut(Power_Controller_t *ctrl, Power_Channels channel)
 {
     Power_Controller_Channel_t *chan = &ctrl->channels[channel];
 
-    HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, enabled ? 1 : 0);
+    HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, chan->output_enabled);
 
     if (chan->channel_type == CHANNEL_TYPE_VARIABLE) {
         chan->variable.pid.p_gain = 50.0f;
@@ -219,17 +220,17 @@ void Power_Controller_EnableOut(Power_Controller_t *ctrl, Power_Channels channel
         chan->variable.pid.prev_error = 0.0f;
         chan->variable.pid.last_time = HAL_GetTick();
         // TODO: start pid
-        if (!enabled) {
+        if (!chan->output_enabled) {
             Power_Controller_SetVoltage(ctrl, VOLTAGE_VARIABLE_MIN_WHOLE,
                                         VOLTAGE_VARIABLE_MIN_DECIMAL);
         } else {
             Power_Controller_SetVoltage(ctrl, chan->target_voltage_whole,
                                         chan->target_voltage_decimal);
         }
+        Power_Controller_UpdateVarValues(ctrl);
     }
 
-    chan->output_enabled = enabled;
-    Power_Controller_UpdateVarValues(ctrl);
+    chan->output_pending = false;
 }
 
 // static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
