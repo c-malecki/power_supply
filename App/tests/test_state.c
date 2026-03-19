@@ -27,10 +27,10 @@ void print_power_controller_state(Power_Controller_t *ctrl)
            chanVar.variable.cur_dac_steps);
 }
 
-void print_temperature_controller_state(Temperature_Controller_t *ctrl)
-{
-    printf("Temperature Controller:\nstate: %u\ncur_temp:%d\r\n\n", ctrl->state, ctrl->cur_temp);
-}
+// void print_temperature_controller_state(Temperature_Controller_t *ctrl)
+// {
+//     printf("Temperature Controller:\nstate: %u\ncur_temp:%d\r\n\n", ctrl->state, ctrl->cur_temp);
+// }
 
 void Test_PrintAppState(App_t *app)
 {
@@ -38,5 +38,5 @@ void Test_PrintAppState(App_t *app)
     // TODO: print_display_controller_state
     print_power_controller_state(&app->power_controller);
     // TODO: print_rotary_controller_state
-    print_temperature_controller_state(&app->temperature_controller);
+    // print_temperature_controller_state(&app->temperature_controller);
 }

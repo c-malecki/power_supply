@@ -107,7 +107,7 @@ void init_controllers(App_t *app)
     Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
 
     // must be init to ping since it's not an I2C device
-    // Temperature_Controller_Ping_And_Init(&app->temperature_controller);
+    Temperature_Controller_PingAndInit(&app->temperature_controller);
 
     // if all peripherals respond, switch relay to enable power from other bucks to
     // output channels

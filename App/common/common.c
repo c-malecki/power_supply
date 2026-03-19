@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "led_controller.h"
 
+// TODO: Update error mapping
 const char *_Controller_Lookup[] = {
     "Not Specified",  "Display Controller", "Input Controller",
     "LED Controller", "Power Controller",   "Temperature Controller",
@@ -13,11 +14,12 @@ const char *_Peripheral_Lookup[] = {
     "Not Specified", "MCP4725", "INA219 Main", "INA219 Var", "GME12864-13", "DS18B20",
 };
 
-const char *_Function_Lookup[] = { "Not Specified",    "INA Ping",       "MCP Ping",
-                                   "GME Ping",         "INA Init",       "INA Read Voltage",
-                                   "INA Read Current", "MCP SetSteps",   "GME Write Yellow",
-                                   "GME Write Blue",   "GME Write Char", "DS18 Update ROM ID",
-                                   "DS18 Conf",        "DS18 Cnv",       "DS18 Req Read" };
+const char *_Function_Lookup[] = {
+    "Not Specified",    "INA Ping",         "MCP Ping",         "GME Ping",
+    "INA Init",         "INA Read Voltage", "INA Read Current", "MCP Voltage to Steps",
+    "GME Write Yellow", "GME Write Blue",   "GME Write Char",   "DS18 Update ROM ID",
+    "DS18 Conf",        "DS18 Cnv",         "DS18 Req Read",    "DS18 Read C"
+};
 
 const _Error_Blink_t _Error_Blink_Lookup[] = {
     {
@@ -85,11 +87,11 @@ const char *_Error_Message_Lookup[] = {
     "I2C timeout",
     "Power overcurrent",
     "Power overvoltage",
-    "DS18 busy",
+    "DS18 bus busy",
     "DS18 unspecified bus error",
-    "DS18 reset failed",
-    "DS18 invalid data length",
-    "DS18 ROM ID error",
+    "DS18 failed to reset",
+    "DS18 data len mismatch",
+    "DS18 failed to update ROM ID",
     "GME invalid string length",
     "GME invalid character",
     "unknown error",
