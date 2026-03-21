@@ -11,15 +11,14 @@ const char *_Controller_Lookup[] = {
 };
 
 const char *_Peripheral_Lookup[] = {
-    "Not Specified", "MCP4725", "INA219 Main", "INA219 Var", "GME12864-13", "DS18B20",
+    "Not Specified", "MCP4725", "INA219 Main", "INA219 Var", "GME12864-13", "SHT31",
 };
 
-const char *_Function_Lookup[] = {
-    "Not Specified",    "INA Ping",         "MCP Ping",         "GME Ping",
-    "INA Init",         "INA Read Voltage", "INA Read Current", "MCP Voltage to Steps",
-    "GME Write Yellow", "GME Write Blue",   "GME Write Char",   "DS18 Update ROM ID",
-    "DS18 Conf",        "DS18 Cnv",         "DS18 Req Read",    "DS18 Read C"
-};
+const char *_Function_Lookup[] = { "Not Specified",    "INA Ping",         "MCP Ping",
+                                   "GME Ping",         "SHT Ping",         "INA Init",
+                                   "INA Read Voltage", "INA Read Current", "MCP Voltage to Steps",
+                                   "GME Write Yellow", "GME Write Blue",   "GME Write Char",
+                                   "SHT Init",         "SHT Read" };
 
 const _Error_Blink_t _Error_Blink_Lookup[] = {
     {
@@ -47,26 +46,6 @@ const _Error_Blink_t _Error_Blink_Lookup[] = {
         .blinks = 2,
     },
     {
-        .code = ERROR_DS18_BUSY,
-        .blinks = 2,
-    },
-    {
-        .code = ERROR_DS18_BUS,
-        .blinks = 3,
-    },
-    {
-        .code = ERROR_DS18_RESET,
-        .blinks = 4,
-    },
-    {
-        .code = ERROR_DS18_LEN,
-        .blinks = 5,
-    },
-    {
-        .code = ERROR_DS18_ROM_ID,
-        .blinks = 5,
-    },
-    {
         .code = ERROR_GME_INVALID_STR_LEN,
         .blinks = 5,
     },
@@ -87,11 +66,6 @@ const char *_Error_Message_Lookup[] = {
     "I2C timeout",
     "Power overcurrent",
     "Power overvoltage",
-    "DS18 bus busy",
-    "DS18 unspecified bus error",
-    "DS18 failed to reset",
-    "DS18 data len mismatch",
-    "DS18 failed to update ROM ID",
     "GME invalid string length",
     "GME invalid character",
     "unknown error",

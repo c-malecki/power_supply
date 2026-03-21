@@ -20,7 +20,6 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
-#include "stm32f4xx_hal.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -182,12 +181,13 @@ int main(void)
     MX_I2C1_Init();
     MX_TIM3_Init();
     MX_TIM2_Init();
-    MX_TIM1_Init();
     /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
     app.state = APP_STATE_PRE_INIT;
     App_Init(&app, &hi2c1);
+
+    Test_TemperatureSensor(&app);
 
     /* USER CODE END 2 */
 
@@ -199,33 +199,17 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        if (app.power_controller.channels[POWER_CHANNEL_3V3].output_pending == true) {
-            Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_3V3);
-        }
-        if (app.power_controller.channels[POWER_CHANNEL_5V].output_pending == true) {
-            Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_5V);
-        }
-        if (app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_pending == true) {
-            Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_VARIABLE);
-        }
-
-        Power_Controller_UpdateVarValues(&app.power_controller);
-
-        // if (app.temperature_controller.cur_state == TEMP_STATE_READY
-        //     && (app.temperature_controller.prev_state == TEMP_STATE_INIT
-        //         || app.temperature_controller.prev_state == TEMP_STATE_READ_C)) {
-        //     Temperature_Controller_StartCnv(&app.temperature_controller);
-        // } else if (app.temperature_controller.cur_state == TEMP_STATE_CNV
-        //            && app.temperature_controller.prev_state == TEMP_STATE_READY) {
-        //     Temperature_Controller_ReqRead(&app.temperature_controller);
-        // } else if (app.temperature_controller.cur_state == TEMP_STATE_READY
-        //            && app.temperature_controller.prev_state == TEMP_STATE_READ_C) {
-        //     printf("temp: %d\r\n", app.temperature_controller.cur_temp);
+        // if (app.power_controller.channels[POWER_CHANNEL_3V3].output_pending == true) {
+        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_3V3);
+        // }
+        // if (app.power_controller.channels[POWER_CHANNEL_5V].output_pending == true) {
+        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_5V);
+        // }
+        // if (app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_pending == true) {
+        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_VARIABLE);
         // }
 
-        // HAL_Delay(100);
-
-        // Test_Power_VoltageCurrent(&app);
+        // Power_Controller_UpdateVarValues(&app.power_controller);
 
         // App_Run(&app);
     }

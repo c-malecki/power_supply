@@ -1,4 +1,4 @@
-#include "MCP4725.h"
+#include "mcp4725.h"
 #include "stm32f4xx_hal_def.h"
 #include <stdint.h>
 #include "common.h"

@@ -1,6 +1,6 @@
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
-#include "INA219.h"
+#include "ina219.h"
 #include <stdlib.h>
 #include "common.h"
 
