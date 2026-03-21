@@ -11,7 +11,7 @@
 #include "led_controller.h"
 #include "power_controller.h"
 #include "temperature_controller.h"
-#include "INA219.h"
+#include "ina219.h"
 #include "common.h"
 
 const char *_App_State_Lookup[] = {
@@ -99,21 +99,17 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 
 void init_controllers(App_t *app)
 {
-    // no ping involved for LEDs
-    // LED_Controller_Init(&app->led_controller);
-
     // Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
     Power_Controller_PingMainINA(&app->power_controller, app->i2c_handle);
     Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
-
-    // must be init to ping since it's not an I2C device
-    // Temperature_Controller_PingAndInit(&app->temperature_controller);
+    Temperature_Controller_PingSHT(&app->temperature_controller, app->i2c_handle);
 
     // if all peripherals respond, switch relay to enable power from other bucks to
     // output channels
     HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_SET);
 
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
+    Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
     // Display_Controller_Init(&app->display_controller, app->i2c_handle);
 }
 

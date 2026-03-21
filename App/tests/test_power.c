@@ -7,7 +7,7 @@
 #include "power_controller.h"
 #include "tests.h"
 #include "common.h"
-#include "MCP4725.h"
+#include "mcp4725.h"
 
 void test_fixed_chans(Power_Controller_t *ctrl);
 void test_var_chan(Power_Controller_t *ctrl);

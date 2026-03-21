@@ -9,11 +9,8 @@
 void Test_TemperatureSensor(App_t *app)
 {
     printf("Test_TemperatureSensor\n**********\r\n\n");
-    Temperature_Controller_StartCnv(&app->temperature_controller);
 
-    HAL_Delay(750);
-
-    Temperature_Controller_EndRead(&app->temperature_controller);
+    Temperature_Controller_Read(&app->temperature_controller);
 
     printf("temp: %d\r\n", app->temperature_controller.cur_temp);
 }

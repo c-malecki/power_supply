@@ -4,7 +4,7 @@
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "MCP4725.h"
+#include "mcp4725.h"
 #include "common.h"
 
 #define VOLTAGE_VARIABLE_MIN_WHOLE 6

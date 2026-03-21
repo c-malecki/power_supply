@@ -7,8 +7,8 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 //
-#include "INA219.h"
-#include "MCP4725.h"
+#include "ina219.h"
+#include "mcp4725.h"
 #include "common.h"
 #include "power_controller.h"
 

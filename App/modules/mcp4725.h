@@ -2,7 +2,6 @@
 #define __MCP4725_H__
 
 #include "stm32f4xx_hal.h"
-#include "stdint.h"
 #include <stdint.h>
 #include "common.h"
 

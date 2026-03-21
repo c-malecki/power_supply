@@ -118,8 +118,8 @@ void Error_Handler(void);
 #define PWM_FAN_GPIO_Port GPIOB
 #define NCB5_Pin GPIO_PIN_5
 #define NCB5_GPIO_Port GPIOB
-#define GPIO_DS18B20_Pin GPIO_PIN_6
-#define GPIO_DS18B20_GPIO_Port GPIOB
+#define NCB6_Pin GPIO_PIN_6
+#define NCB6_GPIO_Port GPIOB
 #define NCB7_Pin GPIO_PIN_7
 #define NCB7_GPIO_Port GPIOB
 
