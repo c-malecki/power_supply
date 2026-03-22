@@ -68,8 +68,6 @@ void Error_Handler(void);
 #define GPIO_BTN_VAR_EXTI_IRQn EXTI15_10_IRQn
 #define NC_Pin GPIO_PIN_0
 #define NC_GPIO_Port GPIOA
-#define NCA1_Pin GPIO_PIN_1
-#define NCA1_GPIO_Port GPIOA
 #define NCA2_Pin GPIO_PIN_2
 #define NCA2_GPIO_Port GPIOA
 #define NCA3_Pin GPIO_PIN_3
@@ -88,8 +86,8 @@ void Error_Handler(void);
 #define NCB0_GPIO_Port GPIOB
 #define GPIO_RELAY_S_Pin GPIO_PIN_1
 #define GPIO_RELAY_S_GPIO_Port GPIOB
-#define NCB2_Pin GPIO_PIN_2
-#define NCB2_GPIO_Port GPIOB
+#define NC_BOOT_Pin GPIO_PIN_2
+#define NC_BOOT_GPIO_Port GPIOB
 #define NCB10_Pin GPIO_PIN_10
 #define NCB10_GPIO_Port GPIOB
 #define NCB12_Pin GPIO_PIN_12
@@ -102,10 +100,10 @@ void Error_Handler(void);
 #define GPIO_MOSFET_VAR_GPIO_Port GPIOB
 #define NCA8_Pin GPIO_PIN_8
 #define NCA8_GPIO_Port GPIOA
-#define GPIO_LED_3V3_Pin GPIO_PIN_9
-#define GPIO_LED_3V3_GPIO_Port GPIOA
-#define GPIO_LED_5V_Pin GPIO_PIN_10
-#define GPIO_LED_5V_GPIO_Port GPIOA
+#define NCA9_Pin GPIO_PIN_9
+#define NCA9_GPIO_Port GPIOA
+#define NCA10_Pin GPIO_PIN_10
+#define NCA10_GPIO_Port GPIOA
 #define NCA11_Pin GPIO_PIN_11
 #define NCA11_GPIO_Port GPIOA
 #define NCA12_Pin GPIO_PIN_12

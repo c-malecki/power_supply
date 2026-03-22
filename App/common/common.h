@@ -21,6 +21,7 @@ typedef enum {
     PERIPHERAL_INA_VAR,
     PERIPHERAL_GME,
     PERIPHERAL_SHT,
+    PERIPHERAL_FAN,
 } _Peripherals;
 
 extern const char *_Peripheral_Lookup[];
@@ -39,7 +40,8 @@ typedef enum {
     FUNCTION_GME_WRITE_BLUE,
     FUNCTION_GME_WRITE_CHAR,
     FUNCTION_SHT_INIT,
-    FUNCTION_SHT_READ
+    FUNCTION_SHT_READ,
+    FUNCTION_TIM_IC_START_IT,
 } _Functions;
 
 extern const char *_Function_Lookup[];

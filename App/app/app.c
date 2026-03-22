@@ -111,6 +111,7 @@ void init_controllers(App_t *app)
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
     Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
     // Display_Controller_Init(&app->display_controller, app->i2c_handle);
+    HAL_Delay(500);
 }
 
 void test_controllers(App_t *app)

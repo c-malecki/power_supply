@@ -51,12 +51,12 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, NC_Pin|NCA1_Pin|NCA2_Pin|NCA3_Pin
-                          |NCA8_Pin|GPIO_LED_3V3_Pin|GPIO_LED_5V_Pin|NCA11_Pin
-                          |NCA12_Pin|NCA15_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, NC_Pin|NCA2_Pin|NCA3_Pin|NCA8_Pin
+                          |NCA9_Pin|NCA10_Pin|NCA11_Pin|NCA12_Pin
+                          |NCA15_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|GPIO_RELAY_S_Pin|NCB2_Pin|NCB10_Pin
+  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|GPIO_RELAY_S_Pin|NC_BOOT_Pin|NCB10_Pin
                           |NCB12_Pin|GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin
                           |NCB5_Pin|NCB6_Pin|NCB7_Pin, GPIO_PIN_RESET);
 
@@ -66,12 +66,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NC_Pin NCA1_Pin NCA2_Pin NCA3_Pin
-                           NCA8_Pin GPIO_LED_3V3_Pin GPIO_LED_5V_Pin NCA11_Pin
-                           NCA12_Pin NCA15_Pin */
-  GPIO_InitStruct.Pin = NC_Pin|NCA1_Pin|NCA2_Pin|NCA3_Pin
-                          |NCA8_Pin|GPIO_LED_3V3_Pin|GPIO_LED_5V_Pin|NCA11_Pin
-                          |NCA12_Pin|NCA15_Pin;
+  /*Configure GPIO pins : NC_Pin NCA2_Pin NCA3_Pin NCA8_Pin
+                           NCA9_Pin NCA10_Pin NCA11_Pin NCA12_Pin
+                           NCA15_Pin */
+  GPIO_InitStruct.Pin = NC_Pin|NCA2_Pin|NCA3_Pin|NCA8_Pin
+                          |NCA9_Pin|NCA10_Pin|NCA11_Pin|NCA12_Pin
+                          |NCA15_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -89,10 +89,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NCB0_Pin GPIO_RELAY_S_Pin NCB2_Pin NCB10_Pin
+  /*Configure GPIO pins : NCB0_Pin GPIO_RELAY_S_Pin NC_BOOT_Pin NCB10_Pin
                            NCB12_Pin GPIO_MOSFET_3V3_Pin GPIO_MOSFET_5V_Pin GPIO_MOSFET_VAR_Pin
                            NCB5_Pin NCB6_Pin NCB7_Pin */
-  GPIO_InitStruct.Pin = NCB0_Pin|GPIO_RELAY_S_Pin|NCB2_Pin|NCB10_Pin
+  GPIO_InitStruct.Pin = NCB0_Pin|GPIO_RELAY_S_Pin|NC_BOOT_Pin|NCB10_Pin
                           |NCB12_Pin|GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin
                           |NCB5_Pin|NCB6_Pin|NCB7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
