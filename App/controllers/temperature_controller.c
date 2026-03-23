@@ -47,20 +47,22 @@ void Temperature_Controller_Init(Temperature_Controller_t *ctrl, I2C_HandleTypeD
 
     // start pwm generation for fan control
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+    ctrl->state = TEMP_CTRL_STATE_READY;
 }
 
+// TODO: test rpms after level shifter
 void Temperature_Controller_UpdateFan(Temperature_Controller_t *ctrl)
 {
-    static bool fan_running = false;
     uint32_t pwm = 0;
 
     if (ctrl->cur_temp >= FAN_TEMP_MIN) {
-        fan_running = true;
+        ctrl->fan_running = true;
     } else if (ctrl->cur_temp <= FAN_TEMP_OFF) {
-        fan_running = false;
+        ctrl->fan_running = false;
     }
 
-    if (!fan_running) {
+    if (!ctrl->fan_running) {
         pwm = 0;
     } else if (ctrl->cur_temp >= FAN_TEMP_MAX) {
         pwm = FAN_PWM_MAX;
@@ -73,18 +75,43 @@ void Temperature_Controller_UpdateFan(Temperature_Controller_t *ctrl)
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pwm);
 }
 
-void Temperature_Controller_Read(Temperature_Controller_t *ctrl)
+void Temperature_Controller_StartRead(Temperature_Controller_t *ctrl)
 {
-    SHT_Result_t result = SHT_Read_Temperature(ctrl->i2c_handle);
+    ctrl->state = TEMP_CTRL_STATE_START_READ;
+
+    _Error_Codes code = SHT_StartRead(ctrl->i2c_handle);
+    if (code != ERROR_NONE) {
+        ctrl->error_cb(ctrl->error_ctx,
+                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                    .peripheral = PERIPHERAL_SHT,
+                                    .code = code,
+                                    .function = FUNCTION_SHT_START_READ });
+    }
+
+    ctrl->temp_last_read = HAL_GetTick();
+    ctrl->state = TEMP_CTRL_STATE_WAIT_RESULT;
+}
+
+void Temperature_Controller_CheckResult(Temperature_Controller_t *ctrl)
+{
+    if (((HAL_GetTick() - ctrl->temp_last_read) >= 15)) {
+        ctrl->state = TEMP_CTRL_STATE_GET_RESULT;
+    }
+}
+
+void Temperature_Controller_GetResult(Temperature_Controller_t *ctrl)
+{
+    SHT_Result_t result = SHT_GetResult(ctrl->i2c_handle);
     if (result.code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
                                     .peripheral = PERIPHERAL_SHT,
                                     .code = result.code,
-                                    .function = FUNCTION_SHT_READ });
+                                    .function = FUNCTION_SHT_GET_RESULT });
     }
 
     ctrl->cur_temp = result.temp_c;
+    ctrl->temp_last_result = HAL_GetTick();
 
     if (ctrl->cur_temp >= TEMP_CRITICAL) {
         // TODO: if cur temp too high, shut down
@@ -97,4 +124,36 @@ void Temperature_Controller_Read(Temperature_Controller_t *ctrl)
     }
 
     Temperature_Controller_UpdateFan(ctrl);
+
+    ctrl->state = TEMP_CTRL_STATE_WAIT_READ;
+}
+
+void Temperature_Controller_CheckReady(Temperature_Controller_t *ctrl)
+{
+    if (((HAL_GetTick() - ctrl->temp_last_result) > 1000)) {
+        ctrl->temp_last_read = 0;
+        ctrl->temp_last_result = 0;
+        ctrl->state = TEMP_CTRL_STATE_READY;
+    }
+}
+
+void Temperature_ControllerRun(Temperature_Controller_t *ctrl)
+{
+    switch (ctrl->state) {
+    case TEMP_CTRL_STATE_INIT:
+    case TEMP_CTRL_STATE_START_READ:
+        break;
+    case TEMP_CTRL_STATE_READY:
+        Temperature_Controller_StartRead(ctrl);
+        break;
+    case TEMP_CTRL_STATE_WAIT_RESULT:
+        Temperature_Controller_CheckResult(ctrl);
+        break;
+    case TEMP_CTRL_STATE_GET_RESULT:
+        Temperature_Controller_GetResult(ctrl);
+        break;
+    case TEMP_CTRL_STATE_WAIT_READ:
+        Temperature_Controller_CheckReady(ctrl);
+        break;
+    }
 }

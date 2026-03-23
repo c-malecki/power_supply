@@ -20,7 +20,6 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
-#include "stm32f4xx_hal.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -192,7 +191,6 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-    printf("tach interrupt\r\n");
     // TODO: set flag and handle logic outside of interrupt
     Temperature_Controller_t *ctrl = &app.temperature_controller;
     if (htim->Instance == TIM5 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
