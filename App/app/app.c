@@ -99,10 +99,10 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 
 void init_controllers(App_t *app)
 {
-    // Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
     Power_Controller_PingMainINA(&app->power_controller, app->i2c_handle);
     Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
     Temperature_Controller_PingSHT(&app->temperature_controller, app->i2c_handle);
+    Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
 
     // if all peripherals respond, switch relay to enable power from other bucks to
     // output channels
@@ -111,7 +111,7 @@ void init_controllers(App_t *app)
 
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
     Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
-    // Display_Controller_Init(&app->display_controller, app->i2c_handle);
+    Display_Controller_Init(&app->display_controller, app->i2c_handle);
 }
 
 void test_controllers(App_t *app)

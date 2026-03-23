@@ -116,7 +116,7 @@ int main(void)
     app.state = APP_STATE_PRE_INIT;
     App_Init(&app, &hi2c1);
 
-    Test_TemperatureController(&app);
+    Test_Display(&app);
 
     /* USER CODE END 2 */
 
@@ -191,7 +191,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-    // TODO: set flag and handle logic outside of interrupt
+    // TODO: issue #28: set flag and handle logic outside of interrupt
     Temperature_Controller_t *ctrl = &app.temperature_controller;
     if (htim->Instance == TIM5 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
         ctrl->fan_cur = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
@@ -233,6 +233,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     case GPIO_BTN_VAR_Pin:
     {
+        // TODO: issue #30: adjust debounce time to get buttons to stable toggle
         if (now - last_press_var < 75)
             return;
         last_press_var = now;
