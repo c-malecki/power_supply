@@ -19,6 +19,7 @@ typedef struct
 } SHT_Result_t;
 
 _Error_Codes SHT_Init(I2C_HandleTypeDef *i2c_handle);
-SHT_Result_t SHT_Read_Temperature(I2C_HandleTypeDef *i2c_handle);
+_Error_Codes SHT_StartRead(I2C_HandleTypeDef *i2c_handle);
+SHT_Result_t SHT_GetResult(I2C_HandleTypeDef *i2c_handle);
 
 #endif // __SHT31_H__

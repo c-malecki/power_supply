@@ -107,11 +107,11 @@ void init_controllers(App_t *app)
     // if all peripherals respond, switch relay to enable power from other bucks to
     // output channels
     HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_SET);
+    HAL_Delay(100);
 
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
     Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
     // Display_Controller_Init(&app->display_controller, app->i2c_handle);
-    HAL_Delay(500);
 }
 
 void test_controllers(App_t *app)
