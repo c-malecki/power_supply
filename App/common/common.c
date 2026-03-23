@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "led_controller.h"
 
-// TODO: Update error mapping
+// TODO: issue #2: create better error system
 const char *_Controller_Lookup[] = {
     "Not Specified",  "Display Controller", "Input Controller",
     "LED Controller", "Power Controller",   "Temperature Controller",

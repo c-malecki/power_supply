@@ -5,10 +5,16 @@
 #include <stdint.h>
 #include "common.h"
 
-#define DISPLAY_YELLOW_MAX_CHAR 14
-#define DISPLAY_7x10_CLEAR_LINE "              "
-#define DISPLAY_BLUE_MAX_CHAR 10
-#define DISPLAY_11x18_CLEAR_LINE "          "
+#define DISPLAY_TOP_ROW 3
+#define DISPLAY_TOP_COL_1 2
+#define DISPLAY_TOP_COL_2 34
+#define DISPLAY_TOP_COL_3 66
+#define DISPLAY_TOP_COL_4 98
+
+#define DISPLAY_BOT_ROW_1 20
+#define DISPLAY_BOT_ROW_2 42
+#define DISPLAY_BOT_COL_1 2
+#define DISPLAY_BOT_COL_2 82
 
 typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 

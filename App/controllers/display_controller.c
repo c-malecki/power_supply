@@ -26,91 +26,87 @@ void Display_Controller_PingGME(Display_Controller_t *ctrl, I2C_HandleTypeDef *i
 
 void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    char *text = "Initializing...";
     ssd1306_Init();
-    ssd1306_SetCursor(12, 27);
-    ssd1306_WriteString(text, Font_7x10, White);
-    ssd1306_UpdateScreen();
 }
 
-void Display_Controller_Write_Yellow(Display_Controller_t *ctrl, char *str)
-{
-    size_t len = strlen(str);
-    if (len == 0 || len > DISPLAY_YELLOW_MAX_CHAR) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
-                                    .peripheral = PERIPHERAL_GME,
-                                    .code = ERROR_GME_INVALID_STR_LEN,
-                                    .function = FUNCTION_GME_WRITE_YELLOW });
-    }
+// void Display_Controller_Write_Yellow(Display_Controller_t *ctrl, char *str)
+// {
+//     size_t len = strlen(str);
+//     if (len == 0 || len > DISPLAY_YELLOW_MAX_CHAR) {
+//         ctrl->error_cb(ctrl->error_ctx,
+//                        (_Error_t) { .controller = CONTROLLER_DISPLAY,
+//                                     .peripheral = PERIPHERAL_GME,
+//                                     .code = ERROR_GME_INVALID_STR_LEN,
+//                                     .function = FUNCTION_GME_WRITE_YELLOW });
+//     }
 
-    uint8_t x = 2;
-    uint8_t y = 3;
+//     uint8_t x = 2;
+//     uint8_t y = 3;
 
-    ssd1306_SetCursor(x, y);
-    ssd1306_WriteString(DISPLAY_7x10_CLEAR_LINE, Font_7x10, White);
+//     ssd1306_SetCursor(x, y);
+//     ssd1306_WriteString(DISPLAY_7x10_CLEAR_LINE, Font_7x10, White);
 
-    for (int i = 0; i < len; i++) {
-        ssd1306_SetCursor(x, y);
-        char v = ssd1306_WriteChar(str[i], Font_7x10, White);
-        if (v == 0) {
-            ctrl->error_cb(ctrl->error_ctx,
-                           (_Error_t) { .controller = CONTROLLER_DISPLAY,
-                                        .peripheral = PERIPHERAL_GME,
-                                        .code = ERROR_GME_INVALID_CHAR,
-                                        .function = FUNCTION_GME_WRITE_CHAR });
-        }
-        x += Font_7x10.width + 2;
-    }
+//     for (int i = 0; i < len; i++) {
+//         ssd1306_SetCursor(x, y);
+//         char v = ssd1306_WriteChar(str[i], Font_7x10, White);
+//         if (v == 0) {
+//             ctrl->error_cb(ctrl->error_ctx,
+//                            (_Error_t) { .controller = CONTROLLER_DISPLAY,
+//                                         .peripheral = PERIPHERAL_GME,
+//                                         .code = ERROR_GME_INVALID_CHAR,
+//                                         .function = FUNCTION_GME_WRITE_CHAR });
+//         }
+//         x += Font_7x10.width + 2;
+//     }
 
-    ssd1306_UpdateScreen();
-}
+//     ssd1306_UpdateScreen();
+// }
 
-void Display_Controller_Write_Blue(Display_Controller_t *ctrl, char *str, Display_Blue_Pos pos)
-{
-    size_t len = strlen(str);
-    if (len == 0 || len > DISPLAY_BLUE_MAX_CHAR) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
-                                    .peripheral = PERIPHERAL_GME,
-                                    .code = ERROR_GME_INVALID_STR_LEN,
-                                    .function = FUNCTION_GME_WRITE_BLUE });
-    }
+// void Display_Controller_Write_Blue(Display_Controller_t *ctrl, char *str, Display_Blue_Pos pos)
+// {
+//     size_t len = strlen(str);
+//     if (len == 0 || len > DISPLAY_BLUE_MAX_CHAR) {
+//         ctrl->error_cb(ctrl->error_ctx,
+//                        (_Error_t) { .controller = CONTROLLER_DISPLAY,
+//                                     .peripheral = PERIPHERAL_GME,
+//                                     .code = ERROR_GME_INVALID_STR_LEN,
+//                                     .function = FUNCTION_GME_WRITE_BLUE });
+//     }
 
-    uint8_t x = 3;
-    uint8_t y = pos == DISPLAY_BLUE_TOP ? 20 : 42;
+//     uint8_t x = 3;
+//     uint8_t y = pos == DISPLAY_BLUE_TOP ? 20 : 42;
 
-    ssd1306_SetCursor(x, y);
-    ssd1306_WriteString(DISPLAY_11x18_CLEAR_LINE, Font_11x18, White);
+//     ssd1306_SetCursor(x, y);
+//     ssd1306_WriteString(DISPLAY_11x18_CLEAR_LINE, Font_11x18, White);
 
-    for (int i = 0; i < len; i++) {
-        ssd1306_SetCursor(x, y);
-        char v = ssd1306_WriteChar(str[i], Font_11x18, White);
-        if (v == 0) {
-            ctrl->error_cb(ctrl->error_ctx,
-                           (_Error_t) { .controller = CONTROLLER_DISPLAY,
-                                        .peripheral = PERIPHERAL_GME,
-                                        .code = ERROR_GME_INVALID_CHAR,
-                                        .function = FUNCTION_GME_WRITE_CHAR });
-        }
-        x += Font_11x18.width + 2;
-    }
+//     for (int i = 0; i < len; i++) {
+//         ssd1306_SetCursor(x, y);
+//         char v = ssd1306_WriteChar(str[i], Font_11x18, White);
+//         if (v == 0) {
+//             ctrl->error_cb(ctrl->error_ctx,
+//                            (_Error_t) { .controller = CONTROLLER_DISPLAY,
+//                                         .peripheral = PERIPHERAL_GME,
+//                                         .code = ERROR_GME_INVALID_CHAR,
+//                                         .function = FUNCTION_GME_WRITE_CHAR });
+//         }
+//         x += Font_11x18.width + 2;
+//     }
 
-    ssd1306_UpdateScreen();
-}
+//     ssd1306_UpdateScreen();
+// }
 
-void Display_Controller_ShowVariableChannel(Display_Controller_t *ctrl, int32_t voltage_whole,
-                                            uint32_t voltage_decimal, int32_t current_whole,
-                                            uint32_t current_decimal)
-{
-    char buf[DISPLAY_BLUE_MAX_CHAR + 1];
+// void Display_Controller_ShowVariableChannel(Display_Controller_t *ctrl, int32_t voltage_whole,
+//                                             uint32_t voltage_decimal, int32_t current_whole,
+//                                             uint32_t current_decimal)
+// {
+//     char buf[DISPLAY_BLUE_MAX_CHAR + 1];
 
-    snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "V", voltage_whole, voltage_decimal);
-    Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_TOP);
+//     snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "V", voltage_whole, voltage_decimal);
+//     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_TOP);
 
-    snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "mA", current_whole, current_decimal);
-    Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_BOT);
-}
+//     snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "mA", current_whole, current_decimal);
+//     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_BOT);
+// }
 
 // chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
 // chan->rotary.clk_pin = RTRY_CLK_Pin;
