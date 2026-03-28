@@ -1,0 +1,9 @@
+Reworking board
+
+Change bucks to 4 total
+6.5v -> 5V LDO -> 3.3V LDO - channel out
+                           - channel out
+
+Add 2 INA and monitor main in, 12V, 5/3.3V out, variable out
+Remove Relay and use EN pins on LM2596s
+i2c bus add 6.8k pull-ups
