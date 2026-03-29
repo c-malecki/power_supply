@@ -18,6 +18,21 @@
 typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 
 typedef enum {
+    POWER_BUCK_6V5 = 0,
+    POWER_BUCK_12V,
+    POWER_BUCK_VAR
+} Power_Bucks;
+
+typedef struct
+{
+    bool on;
+    int32_t voltage_w;
+    uint32_t voltage_d;
+    int32_t current_w;
+    uint32_t current_d;
+} Power_Controller_Buck_t;
+
+typedef enum {
     POWER_CHANNEL_3V3 = 0,
     POWER_CHANNEL_5V,
     POWER_CHANNEL_VARIABLE
@@ -77,6 +92,7 @@ typedef struct
 typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
+    Power_Controller_Buck_t bucks[3];
     Power_Controller_Channel_t channels[3];
     int32_t main_voltage_whole;
     uint32_t main_voltage_decimal;
@@ -86,9 +102,10 @@ typedef struct
     void *error_ctx;
 } Power_Controller_t;
 
-void Power_Controller_PingMainINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
-void Power_Controller_PingVarINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_PingINA(Power_Controller_t *ctrl, uint32_t addr,
+                              I2C_HandleTypeDef *i2c_handle);
 void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Power_Controller_ToggleBuck(Power_Controller_t *ctrl, Power_Bucks buck);
 void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
 
 void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl);

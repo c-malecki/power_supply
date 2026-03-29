@@ -20,8 +20,11 @@ typedef enum {
     PERIPHERAL_INA_MAIN,
     PERIPHERAL_INA_VAR,
     PERIPHERAL_GME,
-    PERIPHERAL_SHT,
+    PERIPHERAL_SHT_BUCK,
     PERIPHERAL_FAN,
+    PERIPHERAL_INA_6V5,
+    PERIPHERAL_INA_12V,
+    PERIPHERAL_SHT_MOSFET,
 } _Peripherals;
 
 extern const char *_Peripheral_Lookup[];

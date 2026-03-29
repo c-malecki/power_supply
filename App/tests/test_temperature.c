@@ -27,17 +27,17 @@ void Test_TemperatureController(App_t *app)
     //     case TEMP_CTRL_STATE_START_READ:
     //         break;
     //     case TEMP_CTRL_STATE_READY:
-    //         Temperature_Controller_StartRead(ctrl);
+    //         Temperature_Controller_SensorStartRead(ctrl);
     //         break;
     //     case TEMP_CTRL_STATE_WAIT_RESULT:
-    //         Temperature_Controller_CheckResult(ctrl);
+    //         Temperature_Controller_SensorCheckResult(ctrl);
     //         break;
     //     case TEMP_CTRL_STATE_GET_RESULT:
-    //         Temperature_Controller_GetResult(ctrl);
+    //         Temperature_Controller_SensorGetResult(ctrl);
     //         print_ctrl(ctrl);
     //         break;
     //     case TEMP_CTRL_STATE_WAIT_READ:
-    //         Temperature_Controller_CheckReady(ctrl);
+    //         Temperature_Controller_SensorCheckReady(ctrl);
     //         break;
     //     }
     // }

@@ -19,6 +19,7 @@ const char *_App_State_Lookup[] = {
     "Check Temperature", "Check Power",      "Check Display",
 };
 
+void ping_peripherals(App_t *app);
 void init_controllers(App_t *app);
 void test_controllers(App_t *app);
 void check_temp(App_t *app);
@@ -73,18 +74,28 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 
     app->display_controller.error_cb = error_callback;
     app->display_controller.error_ctx = app;
+    app->display_controller.i2c_handle = i2c_handle;
 
     app->led_controller.error_cb = error_callback;
     app->led_controller.error_ctx = app;
 
     app->power_controller.error_cb = error_callback;
     app->power_controller.error_ctx = app;
+    app->power_controller.i2c_handle = i2c_handle;
 
     app->rotary_controller.error_cb = error_callback;
     app->rotary_controller.error_ctx = app;
 
     app->temperature_controller.error_cb = error_callback;
     app->temperature_controller.error_ctx = app;
+    app->temperature_controller.i2c_handle = i2c_handle;
+
+    app->state = APP_STATE_PING_PERIHPERALS;
+    ping_peripherals(app);
+
+    Power_Controller_ToggleBuck(&app->power_controller, POWER_BUCK_6V5);
+    Power_Controller_ToggleBuck(&app->power_controller, POWER_BUCK_12V);
+    Power_Controller_ToggleBuck(&app->power_controller, POWER_BUCK_VAR);
 
     app->state = APP_STATE_INIT_CONTROLLERS;
     init_controllers(app);
@@ -97,18 +108,28 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     app->state = APP_STATE_START_MASTER;
 }
 
+void ping_peripherals(App_t *app)
+{
+    Power_Controller_PingINA(&app->power_controller, INA_I2C_ADDRESS_MAIN, app->i2c_handle);
+    Power_Controller_PingINA(&app->power_controller, INA_I2C_ADDRESS_6V5, app->i2c_handle);
+    Power_Controller_PingINA(&app->power_controller, INA_I2C_ADDRESS_12V, app->i2c_handle);
+    Power_Controller_PingINA(&app->power_controller, INA_I2C_ADDRESS_VAR, app->i2c_handle);
+
+    Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
+
+    Temperature_Controller_SensorPing(&app->temperature_controller, app->i2c_handle);
+    // TODO: add second ping
+
+    Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
+    // TODO: add second ping
+
+    // if all peripherals respond, switch the bucks on
+
+    HAL_Delay(100);
+}
+
 void init_controllers(App_t *app)
 {
-    Power_Controller_PingMainINA(&app->power_controller, app->i2c_handle);
-    Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
-    Temperature_Controller_PingSHT(&app->temperature_controller, app->i2c_handle);
-    Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
-
-    // if all peripherals respond, switch relay to enable power from other bucks to
-    // output channels
-    HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_SET);
-    HAL_Delay(100);
-
     Power_Controller_Init(&app->power_controller, app->i2c_handle);
     Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
     Display_Controller_Init(&app->display_controller, app->i2c_handle);

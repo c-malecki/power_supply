@@ -4,6 +4,7 @@
 
 #include "gpio.h"
 #include "main.h"
+#include "stm32f411xe.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 //
@@ -55,27 +56,25 @@ static const Power_Controller_Channel_t channel_var_default = {
             },
     }};
 
-void Power_Controller_PingMainINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Power_Controller_PingINA(Power_Controller_t *ctrl, uint32_t addr,
+                              I2C_HandleTypeDef *i2c_handle)
 {
-    _Error_Codes code =
-        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_MAIN, 3, 100));
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_MAIN,
-                                    .code = code,
-                                    .function = FUNCTION_INA_PING });
+    int prph = PERIPHERAL_INA_MAIN;
+    switch (addr) {
+    case INA_I2C_ADDRESS_MAIN:
+        break;
+    case INA_I2C_ADDRESS_VAR:
+        prph = PERIPHERAL_INA_VAR;
+    case INA_I2C_ADDRESS_12V:
+        prph = PERIPHERAL_INA_12V;
+    case INA_I2C_ADDRESS_6V5:
+        prph = PERIPHERAL_INA_6V5;
     }
-}
-
-void Power_Controller_PingVarINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
-{
-    _Error_Codes code =
-        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_VAR, 3, 100));
+    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, addr, 3, 100));
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
+                                    .peripheral = prph,
                                     .code = code,
                                     .function = FUNCTION_INA_PING });
     }
@@ -91,6 +90,23 @@ void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
                                     .code = code,
                                     .function = FUNCTION_MCP_PING });
     }
+}
+
+void Power_Controller_ToggleBuck(Power_Controller_t *ctrl, Power_Bucks buck)
+{
+    bool new_state = !ctrl->bucks[buck].on;
+    uint16_t pin = 0;
+
+    switch (buck) {
+    case POWER_BUCK_6V5:
+        pin = GPIO_BUCK_6V5_Pin;
+    case POWER_BUCK_12V:
+        pin = GPIO_BUCK_12V_Pin;
+    case POWER_BUCK_VAR:
+        pin = GPIO_BUCK_VAR_Pin;
+    }
+
+    HAL_GPIO_WritePin(GPIOA, pin, new_state);
 }
 
 void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)

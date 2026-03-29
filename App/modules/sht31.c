@@ -4,27 +4,26 @@
 #include "common.h"
 #include "sht31.h"
 
-_Error_Codes SHT_Init(I2C_HandleTypeDef *i2c_handle)
+_Error_Codes SHT_Init(uint32_t addr, I2C_HandleTypeDef *i2c_handle)
 {
     uint8_t cmd[2] = { SHT_CMD_SOFT_RESET_MSB, SHT_CMD_SOFT_RESET_LSB };
-    _Error_Codes code =
-        ConvHALError(HAL_I2C_Master_Transmit(i2c_handle, SHT_I2C_ADDRESS, cmd, 2, 100));
+    _Error_Codes code = ConvHALError(HAL_I2C_Master_Transmit(i2c_handle, addr, cmd, 2, 100));
     HAL_Delay(3);
     return code;
 }
 
-_Error_Codes SHT_StartRead(I2C_HandleTypeDef *i2c_handle)
+_Error_Codes SHT_StartRead(uint32_t addr, I2C_HandleTypeDef *i2c_handle)
 {
     uint8_t cmd[2] = { SHT_CMD_MEASURE_MSB, SHT_CMD_MEASURE_LSB };
-    return ConvHALError(HAL_I2C_Master_Transmit(i2c_handle, SHT_I2C_ADDRESS, cmd, 2, 100));
+    return ConvHALError(HAL_I2C_Master_Transmit(i2c_handle, addr, cmd, 2, 100));
 }
 
-SHT_Result_t SHT_GetResult(I2C_HandleTypeDef *i2c_handle)
+SHT_Result_t SHT_GetResult(uint32_t addr, I2C_HandleTypeDef *i2c_handle)
 {
     SHT_Result_t result = { 0 };
 
     uint8_t data[6];
-    result.code = ConvHALError(HAL_I2C_Master_Receive(i2c_handle, SHT_I2C_ADDRESS, data, 6, 100));
+    result.code = ConvHALError(HAL_I2C_Master_Receive(i2c_handle, addr, data, 6, 100));
     if (result.code != ERROR_NONE) {
         return result;
     }

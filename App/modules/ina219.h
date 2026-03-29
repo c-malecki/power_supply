@@ -5,8 +5,10 @@
 #include <stdint.h>
 #include "common.h"
 
-#define INA_I2C_ADDRESS_MAIN (0x41 << 1)
-#define INA_I2C_ADDRESS_VAR (0x40 << 1)
+#define INA_I2C_ADDRESS_MAIN (0x40 << 1)
+#define INA_I2C_ADDRESS_VAR (0x41 << 1)
+#define INA_I2C_ADDRESS_6V5 (0x44 << 1)
+#define INA_I2C_ADDRESS_12V (0x45 << 1)
 
 #define INA_VOLTAGE_REGISTER (0x02)
 #define INA_CURRENT_REGISTER (0x04)
