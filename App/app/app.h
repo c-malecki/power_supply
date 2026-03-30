@@ -13,13 +13,9 @@
 #include "temperature_controller.h"
 
 typedef enum {
-    APP_STATE_PRE_INIT = 0,
-    APP_STATE_PING_PERIHPERALS,
-    APP_STATE_INIT_CONTROLLERS,
-    APP_STATE_TEST_CONTROLLERS,
-    APP_STATE_START_MASTER,
-    APP_STATE_CHECK_TEMPERATURE,
+    APP_STATE_INIT = 0,
     APP_STATE_CHECK_POWER,
+    APP_STATE_CHECK_TEMPERATURE,
     APP_STATE_CHECK_DISPLAY
 } App_States;
 
@@ -27,12 +23,11 @@ extern const char *_App_State_Lookup[];
 
 typedef struct
 {
-    Display_Controller_t display_controller;
+    Dsp_Ctrl_t display_controller;
     Rotary_Controller_t rotary_controller;
     LED_Controller_t led_controller;
-    Power_Controller_t power_controller;
-    Temperature_Controller_t temperature_controller;
-    I2C_HandleTypeDef *i2c_handle;
+    Pwr_Ctrl_t power_controller;
+    Temp_Ctrl_t temperature_controller;
     App_States state;
     _Error_t error;
 } App_t;

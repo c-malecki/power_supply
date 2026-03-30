@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "mcp4725.h"
+#include "ina219.h"
 #include "common.h"
 
 #define VOLTAGE_VARIABLE_MIN_WHOLE 6
@@ -15,106 +16,69 @@
 
 #define VARIABLE_VOLTAGE_TOLLERANCE 0.05f
 
+#define INA_READ_INTERVAL 350
+
 typedef void (*Error_Callback_t)(void *ctx, _Error_t error);
 
 typedef enum {
-    POWER_BUCK_6V5 = 0,
-    POWER_BUCK_12V,
-    POWER_BUCK_VAR
-} Power_Bucks;
+    PWR_BUCK_MAIN = 0,
+    PWR_BUCK_6V5,
+    PWR_BUCK_12V,
+    PWR_BUCK_VARV,
+    PWR_BUCK_COUNT
+} Pwr_Buck;
+
+typedef enum {
+    PWR_CHAN_3V3 = 0,
+    PWR_CHAN_5V,
+    PWR_CHAN_VARV,
+    PWR_CHAN_COUNT,
+} Pwr_Chan;
 
 typedef struct
 {
     bool on;
-    int32_t voltage_w;
-    uint32_t voltage_d;
-    int32_t current_w;
-    uint32_t current_d;
-} Power_Controller_Buck_t;
-
-typedef enum {
-    POWER_CHANNEL_3V3 = 0,
-    POWER_CHANNEL_5V,
-    POWER_CHANNEL_VARIABLE
-} Power_Channels;
+    uint16_t gpio_pin;
+    GPIO_TypeDef *gpio_port;
+    INA_t ina;
+} Pwr_Buck_t;
 
 typedef struct
 {
-    float p_gain;
-    float i_gain;
-    float acc_error;
-    float prev_error;
-    uint32_t last_time;
-} Channel_VAR_PID_t;
-
-typedef enum {
-    IDLE,
-    SETTLING,
-    STABLE
-} Channel_VAR_Adjustments_States_t;
-
-typedef struct
-{
-    Channel_VAR_Adjustments_States_t state;
-    uint32_t start_time;
-    uint16_t delay_ms;
-} Channel_VAR_Adjustment_State_t;
-
-typedef enum {
-    CHANNEL_TYPE_FIXED = 0,
-    CHANNEL_TYPE_VARIABLE,
-} Power_Channel_Types;
-
-typedef struct
-{
-    bool output_pending;
-    bool output_enabled;
-    Power_Channel_Types channel_type;
+    bool toggle_pending;
+    bool output_on;
     uint16_t mosfet_pin;
-    int32_t target_voltage_whole;
-    uint32_t target_voltage_decimal;
     GPIO_TypeDef *mosfet_port;
+} Pwr_Chan_t;
 
-    union {
-        struct
-        {
-            Channel_VAR_Adjustment_State_t adjustment_state;
-            uint16_t cur_dac_steps;
-            int32_t cur_voltage_whole;
-            uint32_t cur_voltage_decimal;
-            int32_t cur_current_whole;
-            uint32_t cur_current_decimal;
-            Channel_VAR_PID_t pid;
-        } variable;
-    };
-} Power_Controller_Channel_t;
+typedef struct
+{
+    float pid_p_gain;
+    float pid_i_gain;
+    float pid_acc_error;
+    float pid_prev_error;
+    int32_t target_voltage_w;
+    uint32_t target_voltage_d;
+    uint32_t pid_last_time;
+    MCP_t mcp;
+} Pwr_Var_Control_t;
 
 typedef struct
 {
     I2C_HandleTypeDef *i2c_handle;
-    Power_Controller_Buck_t bucks[3];
-    Power_Controller_Channel_t channels[3];
-    int32_t main_voltage_whole;
-    uint32_t main_voltage_decimal;
-    int32_t main_current_whole;
-    uint32_t main_current_decimal;
+    Pwr_Buck_t bucks[4];
+    Pwr_Chan_t channels[3];
+    Pwr_Var_Control_t var_ctrls;
     Error_Callback_t error_cb;
     void *error_ctx;
-} Power_Controller_t;
+} Pwr_Ctrl_t;
 
-void Power_Controller_PingINA(Power_Controller_t *ctrl, uint32_t addr,
-                              I2C_HandleTypeDef *i2c_handle);
-void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
-void Power_Controller_ToggleBuck(Power_Controller_t *ctrl, Power_Bucks buck);
-void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Pwr_Ctrl_Init(Pwr_Ctrl_t *ctrl, I2C_HandleTypeDef *i2c_handle);
+void Pwr_Ctrl_Ping(Pwr_Ctrl_t *ctrl);
+void Pwr_Ctrl_Run(Pwr_Ctrl_t *ctrl);
 
-void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl);
-
-void Power_Controller_ToggleOut(Power_Controller_t *ctrl, Power_Channels chan);
-void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
-                                 uint32_t target_voltage_decimal);
-void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl);
-
-void Power_Controller_PrintState(Power_Controller_t *ctrl);
+void Pwr_Buck_Toggle(Pwr_Ctrl_t *ctrl, Pwr_Buck buck);
+void Pwr_Chan_Toggle(Pwr_Ctrl_t *ctrl, Pwr_Chan chan);
+void Pwr_Chan_SetVarV(Pwr_Ctrl_t *ctrl, int32_t target_voltage_w, uint32_t target_voltage_d);
 
 #endif // __POWER_CONTROLLER_H__

@@ -12,24 +12,46 @@
 #include "ssd1306_fonts.h"
 #include "common.h"
 
-void Display_Controller_PingGME(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+static const Dsp_Oled_t oled_menu_default = { .update_pending = false,
+                                              .last_update = 0,
+                                              .i2c_addr = SSD1306_I2C_ADDR_MENU };
+
+static const Dsp_Oled_t oled_var_default = { .update_pending = false,
+                                             .last_update = 0,
+                                             .i2c_addr = SSD1306_I2C_ADDR_VAR };
+
+void Dsp_Ctrl_Init(Dsp_Ctrl_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, SSD1306_I2C_ADDR, 3, 100));
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_DISPLAY,
-                                    .peripheral = PERIPHERAL_GME,
-                                    .code = code,
-                                    .function = FUNCTION_GME_PING });
+    ctrl->i2c_handle = i2c_handle;
+    ctrl->oleds[0] = oled_menu_default;
+    ctrl->oleds[1] = oled_var_default;
+}
+
+void Dsp_Ctrl_Ping(Dsp_Ctrl_t *ctrl)
+{
+    _Error_Codes code;
+
+    for (uint8_t i = 0; i < DSP_COUNT; i++) {
+        code =
+            ConvHALError(HAL_I2C_IsDeviceReady(ctrl->i2c_handle, ctrl->oleds[i].i2c_addr, 3, 100));
+        if (code != ERROR_NONE) {
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_DISPLAY,
+                                        .peripheral = PERIPHERAL_GME,
+                                        .code = code,
+                                        .function = FUNCTION_GME_PING });
+        }
     }
 }
 
-void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Dsp_Ctrl_Run(Dsp_Ctrl_t *ctrl)
 {
-    ssd1306_Init();
+    for (uint8_t i = 0; i < DSP_COUNT; i++) {
+        ssd1306_Init(ctrl->oleds[i].i2c_addr);
+    }
 }
 
-// void Display_Controller_Write_Yellow(Display_Controller_t *ctrl, char *str)
+// void Dsp_Ctrl_WriteYellow(Dsp_Ctrl_t *ctrl, char *str)
 // {
 //     size_t len = strlen(str);
 //     if (len == 0 || len > DISPLAY_YELLOW_MAX_CHAR) {
@@ -62,7 +84,7 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
 //     ssd1306_UpdateScreen();
 // }
 
-// void Display_Controller_Write_Blue(Display_Controller_t *ctrl, char *str, Display_Blue_Pos pos)
+// void Dsp_Ctrl_WriteBlue(Dsp_Ctrl_t *ctrl, char *str, Dsp_Blue_Pos pos)
 // {
 //     size_t len = strlen(str);
 //     if (len == 0 || len > DISPLAY_BLUE_MAX_CHAR) {
@@ -74,7 +96,7 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
 //     }
 
 //     uint8_t x = 3;
-//     uint8_t y = pos == DISPLAY_BLUE_TOP ? 20 : 42;
+//     uint8_t y = pos == DSP_BLUE_TOP ? 20 : 42;
 
 //     ssd1306_SetCursor(x, y);
 //     ssd1306_WriteString(DISPLAY_11x18_CLEAR_LINE, Font_11x18, White);
@@ -95,17 +117,17 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
 //     ssd1306_UpdateScreen();
 // }
 
-// void Display_Controller_ShowVariableChannel(Display_Controller_t *ctrl, int32_t voltage_whole,
+// void Dsp_Ctrl_ShowVariableChannel(Dsp_Ctrl_t *ctrl, int32_t voltage_whole,
 //                                             uint32_t voltage_decimal, int32_t current_whole,
 //                                             uint32_t current_decimal)
 // {
 //     char buf[DISPLAY_BLUE_MAX_CHAR + 1];
 
 //     snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "V", voltage_whole, voltage_decimal);
-//     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_TOP);
+//     Dsp_Ctrl_WriteBlue(ctrl, buf, DSP_BLUE_TOP);
 
 //     snprintf(buf, sizeof(buf), "%" PRId32 ".%03" PRIu32 "mA", current_whole, current_decimal);
-//     Display_Controller_Write_Blue(ctrl, buf, DISPLAY_BLUE_BOT);
+//     Dsp_Ctrl_WriteBlue(ctrl, buf, DSP_BLUE_BOT);
 // }
 
 // chan->rotary.clk_port = RTRY_CLK_GPIO_Port;
@@ -143,7 +165,7 @@ void Display_Controller_Init(Display_Controller_t *ctrl, I2C_HandleTypeDef *i2c_
 
 // float pending_voltage = 0.0f;
 
-// uint8_t Channel_VAR_PollRotary(Power_Controller_t *ctrl, Channel_VAR_t *chan)
+// uint8_t Channel_VAR_PollRotary(Pwr_Ctrl_t *ctrl, Channel_VAR_t *chan)
 // {
 //     uint8_t err = 0;
 //     int8_t change = rotary_read(&chan->rotary);

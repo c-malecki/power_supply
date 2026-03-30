@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include "common.h"
 
-#define SHT_I2C_BUCK_ADDRESS (0x44 << 1)
-#define SHT_I2C_MOSFET_ADDRESS (0x45 << 1)
+#define SHT_I2C_ADDR_BUCK (0x44 << 1)
+#define SHT_I2C_ADDR_MOSFET (0x45 << 1)
 
 #define SHT_CMD_MEASURE_MSB (0x24)
 #define SHT_CMD_MEASURE_LSB (0x00)

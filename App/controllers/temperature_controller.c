@@ -9,61 +9,74 @@
 #include "stm32f4xx_hal_tim.h"
 #include "tim.h"
 
-void Temperature_Controller_SensorPing(Temperature_Controller_t *ctrl,
-                                       Temperature_Controller_Sensors sensor)
-{
-    Temperature_Controller_Sensor_t s = ctrl->sensors[sensor];
-    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(ctrl->i2c_handle, s.i2c_addr, 3, 100));
-    if (code != ERROR_NONE) {
-        uint32_t prph =
-            s.i2c_addr == SHT_I2C_BUCK_ADDRESS ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
-                                    .peripheral = prph,
-                                    .code = code,
-                                    .function = FUNCTION_SHT_PING });
-    }
-}
+static const Temp_Sensor_t buck_sensor_default = { .last_temp = 0,
+                                                   .last_read = 0,
+                                                   .last_result = 0,
+                                                   .i2c_addr = SHT_I2C_ADDR_BUCK,
+                                                   .state = TEMP_SENSOR_STATE_INIT };
 
-void Temperature_Controller_SensorInit(Temperature_Controller_t *ctrl,
-                                       Temperature_Controller_Sensors sensor)
-{
-    Temperature_Controller_Sensor_t *s = &ctrl->sensors[sensor];
+static const Temp_Sensor_t mosfet_sensor_default = { .last_temp = 0,
+                                                     .last_read = 0,
+                                                     .last_result = 0,
+                                                     .i2c_addr = SHT_I2C_ADDR_MOSFET,
+                                                     .state = TEMP_SENSOR_STATE_INIT };
 
-    _Error_Codes code = SHT_Init(s->i2c_addr, ctrl->i2c_handle);
-    if (code != ERROR_NONE) {
-        uint32_t prph =
-            s->i2c_addr == SHT_I2C_BUCK_ADDRESS ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
+static const Temp_Fan_t fan_default = { .value_last = 0,
+                                        .value_cur = 0,
+                                        .value_diff = 0,
+                                        .last_tick = 0,
+                                        .rpm = 0,
+                                        .first_cb = true,
+                                        .on = false };
 
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
-                                    .peripheral = prph,
-                                    .code = code,
-                                    .function = FUNCTION_SHT_INIT });
-    }
-
-    s->state = TEMP_CTRL_SENSOR_STATE_READY;
-}
-
-void Temperature_Controller_Init(Temperature_Controller_t *ctrl, uint32_t addr,
-                                 I2C_HandleTypeDef *i2c_handle)
+void Temp_Ctrl_Init(Temp_Ctrl_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
     ctrl->i2c_handle = i2c_handle;
+    ctrl->sensors[0] = buck_sensor_default;
+    ctrl->sensors[1] = mosfet_sensor_default;
+    ctrl->fan = fan_default;
+}
 
-    // initialize temperature sensor
-    _Error_Codes code = SHT_Init(addr, ctrl->i2c_handle);
-    if (code != ERROR_NONE) {
-        uint32_t prph = addr == SHT_I2C_BUCK_ADDRESS ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
+void Temp_Ctrl_Ping(Temp_Ctrl_t *ctrl)
+{
+    _Error_Codes code;
 
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
-                                    .peripheral = prph,
-                                    .code = code,
-                                    .function = FUNCTION_SHT_INIT });
+    for (uint8_t i = 0; i < TEMP_SENSOR_COUNT; i++) {
+        code = ConvHALError(
+            HAL_I2C_IsDeviceReady(ctrl->i2c_handle, ctrl->sensors[i].i2c_addr, 3, 100));
+        if (code != ERROR_NONE) {
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                        .peripheral = SHT_I2C_ADDR_BUCK,
+                                        .code = code,
+                                        .function = FUNCTION_SHT_PING });
+        }
+    }
+}
+
+void Temp_Ctrl_Run(Temp_Ctrl_t *ctrl)
+{
+    // init all sensors
+    for (uint8_t i = 0; i < TEMP_SENSOR_COUNT; i++) {
+        Temp_Sensor_t *s = &ctrl->sensors[i];
+
+        _Error_Codes code = SHT_Init(s->i2c_addr, ctrl->i2c_handle);
+        if (code != ERROR_NONE) {
+            uint32_t prph =
+                s->i2c_addr == SHT_I2C_ADDR_BUCK ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
+
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
+                                        .peripheral = prph,
+                                        .code = code,
+                                        .function = FUNCTION_SHT_INIT });
+        }
+
+        s->state = TEMP_SENSOR_STATE_READY;
     }
 
     // start input capture direct mode timer for tachometer
-    code = ConvHALError(HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2));
+    _Error_Codes code = ConvHALError(HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2));
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
@@ -74,46 +87,48 @@ void Temperature_Controller_Init(Temperature_Controller_t *ctrl, uint32_t addr,
 
     // start pwm generation for fan control
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-
-    ctrl->state = TEMP_CTRL_STATE_READY;
 }
 
 // TODO: test rpms after level shifter
-void Temperature_Controller_UpdateFan(Temperature_Controller_t *ctrl)
+void Temp_Fan_Update(Temp_Ctrl_t *ctrl)
 {
     uint32_t pwm = 0;
+    Temp_Sensor_t *sb = &ctrl->sensors[TEMP_SENSOR_BUCK];
+    Temp_Sensor_t *sm = &ctrl->sensors[TEMP_SENSOR_MOSFET];
 
-    // TODO: Update to base off of two different temp readings
+    if (sb->last_temp >= FAN_TEMP_MIN || sm->last_temp >= FAN_TEMP_MIN) {
+        ctrl->fan.on = true;
+    } else if (sb->last_temp <= FAN_TEMP_OFF || sm->last_temp <= FAN_TEMP_OFF) {
+        ctrl->fan.on = false;
+    }
 
-    // if (ctrl->cur_temp >= FAN_TEMP_MIN) {
-    //     ctrl->fan_running = true;
-    // } else if (ctrl->cur_temp <= FAN_TEMP_OFF) {
-    //     ctrl->fan_running = false;
-    // }
+    if (!ctrl->fan.on) {
+        pwm = 0;
+    } else if (sb->last_temp >= FAN_TEMP_MAX || sm->last_temp >= FAN_TEMP_MAX) {
+        pwm = FAN_PWM_MAX;
+    } else {
+        int16_t highest = sb->last_temp;
+        if (highest < sm->last_temp) {
+            highest = sm->last_temp;
+        }
 
-    // if (!ctrl->fan_running) {
-    //     pwm = 0;
-    // } else if (ctrl->cur_temp >= FAN_TEMP_MAX) {
-    //     pwm = FAN_PWM_MAX;
-    // } else {
-    //     pwm = FAN_PWM_MIN
-    //         + (ctrl->cur_temp - FAN_TEMP_MIN) * (FAN_PWM_MAX - FAN_PWM_MIN)
-    //             / (FAN_TEMP_MAX - FAN_TEMP_MIN);
-    // }
+        pwm = FAN_PWM_MIN
+            + (highest - FAN_TEMP_MIN) * (FAN_PWM_MAX - FAN_PWM_MIN)
+                / (FAN_TEMP_MAX - FAN_TEMP_MIN);
+    }
 
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pwm);
 }
 
-void Temperature_Controller_SensorStartRead(Temperature_Controller_t *ctrl,
-                                            Temperature_Controller_Sensors sensor)
+void Temp_Sensor_StartRead(Temp_Ctrl_t *ctrl, Temp_Sensor sensor)
 {
-    Temperature_Controller_Sensor_t *s = &ctrl->sensors[sensor];
-    s->state = TEMP_CTRL_SENSOR_STATE_START_READ;
+    Temp_Sensor_t *s = &ctrl->sensors[sensor];
+    s->state = TEMP_SENSOR_STATE_START_READ;
 
     _Error_Codes code = SHT_StartRead(s->i2c_addr, ctrl->i2c_handle);
     if (code != ERROR_NONE) {
         uint32_t prph =
-            s->i2c_addr == SHT_I2C_BUCK_ADDRESS ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
+            s->i2c_addr == SHT_I2C_ADDR_BUCK ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
 
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
@@ -123,28 +138,26 @@ void Temperature_Controller_SensorStartRead(Temperature_Controller_t *ctrl,
     }
 
     s->last_read = HAL_GetTick();
-    s->state = TEMP_CTRL_SENSOR_STATE_WAIT_RESULT;
+    s->state = TEMP_SENSOR_STATE_WAIT_RESULT;
 }
 
-void Temperature_Controller_SensorCheckResult(Temperature_Controller_t *ctrl,
-                                              Temperature_Controller_Sensors sensor)
+void Temp_Sensor_CheckResult(Temp_Ctrl_t *ctrl, Temp_Sensor sensor)
 {
-    Temperature_Controller_Sensor_t *s = &ctrl->sensors[sensor];
+    Temp_Sensor_t *s = &ctrl->sensors[sensor];
 
     if (((HAL_GetTick() - s->last_read) >= 15)) {
-        s->state = TEMP_CTRL_SENSOR_STATE_GET_RESULT;
+        s->state = TEMP_SENSOR_STATE_GET_RESULT;
     }
 }
 
-void Temperature_Controller_SensorGetResult(Temperature_Controller_t *ctrl,
-                                            Temperature_Controller_Sensors sensor)
+void Temp_Sensor_GetResult(Temp_Ctrl_t *ctrl, Temp_Sensor sensor)
 {
-    Temperature_Controller_Sensor_t *s = &ctrl->sensors[sensor];
+    Temp_Sensor_t *s = &ctrl->sensors[sensor];
 
     SHT_Result_t result = SHT_GetResult(s->i2c_addr, ctrl->i2c_handle);
     if (result.code != ERROR_NONE) {
         uint32_t prph =
-            s->i2c_addr == SHT_I2C_BUCK_ADDRESS ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
+            s->i2c_addr == SHT_I2C_ADDR_BUCK ? PERIPHERAL_SHT_BUCK : PERIPHERAL_SHT_MOSFET;
 
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_TEMPERATURE,
@@ -161,49 +174,23 @@ void Temperature_Controller_SensorGetResult(Temperature_Controller_t *ctrl,
     }
 
     // check for a stall (no interrupt in 1 second) and reset
-    if ((HAL_GetTick() - ctrl->last_tick) > 1000) {
-        ctrl->fan_rpm = 0.0f;
-        ctrl->fan_first = 1;
+    if ((HAL_GetTick() - ctrl->fan.last_tick) > 1000) {
+        ctrl->fan.rpm = 0.0f;
+        ctrl->fan.first_cb = 1;
     }
 
-    Temperature_Controller_UpdateFan(ctrl);
+    Temp_Fan_Update(ctrl);
 
-    s->state = TEMP_CTRL_SENSOR_STATE_WAIT_READ;
+    s->state = TEMP_SENSOR_STATE_WAIT_READ;
 }
 
-void Temperature_Controller_SensorCheckReady(Temperature_Controller_t *ctrl,
-                                             Temperature_Controller_Sensors sensor)
+void Temp_Sensor_CheckReady(Temp_Ctrl_t *ctrl, Temp_Sensor sensor)
 {
-    Temperature_Controller_Sensor_t *s = &ctrl->sensors[sensor];
+    Temp_Sensor_t *s = &ctrl->sensors[sensor];
 
     if (((HAL_GetTick() - s->last_result) > 1000)) {
         s->last_read = 0;
         s->last_result = 0;
-        s->state = TEMP_CTRL_SENSOR_STATE_READY;
-    }
-}
-
-void Temperature_ControllerRun(Temperature_Controller_t *ctrl)
-{
-    switch (ctrl->state) {
-    case TEMP_CTRL_STATE_INIT:
-    case TEMP_CTRL_STATE_START_READ:
-        break;
-    case TEMP_CTRL_STATE_READY:
-        Temperature_Controller_SensorStartRead(ctrl, SHT_I2C_BUCK_ADDRESS);
-        Temperature_Controller_SensorStartRead(ctrl, SHT_I2C_MOSFET_ADDRESS);
-        break;
-    case TEMP_CTRL_STATE_WAIT_RESULT:
-        Temperature_Controller_SensorCheckResult(ctrl, SHT_I2C_BUCK_ADDRESS);
-        Temperature_Controller_SensorCheckResult(ctrl, SHT_I2C_MOSFET_ADDRESS);
-        break;
-    case TEMP_CTRL_STATE_GET_RESULT:
-        Temperature_Controller_SensorGetResult(ctrl, SHT_I2C_BUCK_ADDRESS);
-        Temperature_Controller_SensorGetResult(ctrl, SHT_I2C_MOSFET_ADDRESS);
-        break;
-    case TEMP_CTRL_STATE_WAIT_READ:
-        Temperature_Controller_SensorCheckReady(ctrl, SHT_I2C_BUCK_ADDRESS);
-        Temperature_Controller_SensorCheckReady(ctrl, SHT_I2C_MOSFET_ADDRESS);
-        break;
+        s->state = TEMP_SENSOR_STATE_READY;
     }
 }

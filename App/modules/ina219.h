@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include "common.h"
 
-#define INA_I2C_ADDRESS_MAIN (0x40 << 1)
-#define INA_I2C_ADDRESS_VAR (0x41 << 1)
-#define INA_I2C_ADDRESS_6V5 (0x44 << 1)
-#define INA_I2C_ADDRESS_12V (0x45 << 1)
+#define INA_I2C_ADDR_MAIN (0x40 << 1)
+#define INA_I2C_ADDR_VAR (0x41 << 1)
+#define INA_I2C_ADDR_6V5 (0x44 << 1)
+#define INA_I2C_ADDR_12V (0x45 << 1)
 
 #define INA_VOLTAGE_REGISTER (0x02)
 #define INA_CURRENT_REGISTER (0x04)
@@ -26,13 +26,15 @@
 
 typedef struct
 {
-    _Error_Codes code;
-    int32_t whole;
-    uint32_t decimal;
-} INA_Result_t;
+    uint32_t i2c_addr;
+    uint32_t last_read;
+    int32_t voltage_w;
+    uint32_t voltage_d;
+    int32_t current_w;
+    uint32_t current_d;
+} INA_t;
 
-_Error_Codes INA_Init(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
-INA_Result_t INA_Read_Voltage(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
-INA_Result_t INA_Read_Current(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle);
+_Error_Codes INA_Init(INA_t *ina, I2C_HandleTypeDef *i2c_handle);
+_Error_Codes INA_Read(INA_t *ina, I2C_HandleTypeDef *i2c_handle);
 
 #endif
