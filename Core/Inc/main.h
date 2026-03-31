@@ -80,7 +80,6 @@ void Error_Handler(void);
 #define GPIO_RTRY_SW_GPIO_Port GPIOA
 #define GPIO_RTRY_DT_Pin GPIO_PIN_6
 #define GPIO_RTRY_DT_GPIO_Port GPIOA
-#define GPIO_RTRY_DT_EXTI_IRQn EXTI9_5_IRQn
 #define GPIO_RTRY_CLK_Pin GPIO_PIN_7
 #define GPIO_RTRY_CLK_GPIO_Port GPIOA
 #define NC_Pin GPIO_PIN_0

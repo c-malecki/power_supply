@@ -20,6 +20,7 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -116,6 +117,8 @@ int main(void)
     app.state = APP_STATE_INIT;
     App_Init(&app, &hi2c1);
 
+    Test_Power(&app);
+    Test_Temperature(&app);
     Test_Display(&app);
 
     /* USER CODE END 2 */
@@ -283,26 +286,37 @@ void I2C_ResetBus(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
-    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
     for (int i = 0; i < 9; i++) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-        HAL_Delay(1);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-        HAL_Delay(1);
+        HAL_Delay(5); // Slow toggle (approx 100kHz)
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+        HAL_Delay(5);
     }
 
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-    HAL_Delay(1);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
 
-    HAL_I2C_DeInit(&hi2c1);
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    HAL_Delay(5);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // SCL High
+    HAL_Delay(5);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET); // SDA High (STOP condition)
+    HAL_Delay(5);
 }
 /* USER CODE END 4 */
 
