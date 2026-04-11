@@ -102,8 +102,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : GPIO_RTRY_DT_2_Pin GPIO_RTRY_SW_2_Pin */
-  GPIO_InitStruct.Pin = GPIO_RTRY_DT_2_Pin|GPIO_RTRY_SW_2_Pin;
+  /*Configure GPIO pins : GPIO_RTRY_SW_Pin GPIO_RTRY_DT_Pin */
+  GPIO_InitStruct.Pin = GPIO_RTRY_SW_Pin|GPIO_RTRY_DT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

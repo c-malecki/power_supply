@@ -117,9 +117,9 @@ int main(void)
     app.state = APP_STATE_INIT;
     App_Init(&app, &hi2c1);
 
-    Test_Power(&app);
-    Test_Temperature(&app);
-    Test_Display(&app);
+    // Test_Power(&app);
+    // Test_Temperature(&app);
+    // Test_Display(&app);
 
   /* USER CODE END 2 */
 
