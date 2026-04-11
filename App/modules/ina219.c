@@ -4,57 +4,50 @@
 #include <stdlib.h>
 #include "common.h"
 
-_Error_Codes INA_Init(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle)
+_Error_Codes INA_Init(INA_t *ina, I2C_HandleTypeDef *i2c_handle)
 {
     uint8_t pData[2] = { INA_CALIBRATION_VALUE_0, INA_CALIBRATION_VALUE_1 };
     return ConvHALError(
-        HAL_I2C_Mem_Write(i2c_handle, ina_addr, INA_CALIBRATION_REGISTER, 1, pData, 2, 100));
+        HAL_I2C_Mem_Write(i2c_handle, ina->i2c_addr, INA_CALIBRATION_REGISTER, 1, pData, 2, 100));
 }
 
-INA_Result_t INA_Read_Voltage(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle)
+_Error_Codes INA_Read(INA_t *ina, I2C_HandleTypeDef *i2c_handle)
 {
-    uint8_t pData[2];
-    INA_Result_t result;
+    uint8_t vData[2];
 
-    result.code = ConvHALError(
-        HAL_I2C_Mem_Read(i2c_handle, ina_addr, INA_VOLTAGE_REGISTER, 1, pData, 2, 100));
-    if (result.code != ERROR_NONE) {
-        return result;
+    _Error_Codes code = ConvHALError(
+        HAL_I2C_Mem_Read(i2c_handle, ina->i2c_addr, INA_VOLTAGE_REGISTER, 1, vData, 2, 100));
+    if (code != ERROR_NONE) {
+        return code;
     }
 
-    uint16_t raw = ((pData[0] << 8) | pData[1]);
-    uint32_t millivolts = (raw >> 3) * 4;
+    uint16_t rawv = ((vData[0] << 8) | vData[1]);
+    uint32_t millivolts = (rawv >> 3) * 4;
 
-    result.whole = millivolts / 1000;
-    result.decimal = millivolts % 1000;
+    ina->voltage_w = millivolts / 1000;
+    ina->voltage_d = millivolts % 1000;
 
-    return result;
-}
-
-// TODO: fix multimeter or get new one that will read current to verify INA calibration
-INA_Result_t INA_Read_Current(uint32_t ina_addr, I2C_HandleTypeDef *i2c_handle)
-{
-    uint8_t pData[2];
-    INA_Result_t result;
+    // TODO: fix multimeter or get new one that will read current to verify INA calibration
+    uint8_t cData[2];
 
     // per research, a sharp load can reset the INA219 which will reset the calibrartion register
     // so this is extraoverhead but to guarentee correct functionality and readings
-    result.code = INA_Init(ina_addr, i2c_handle);
-    if (result.code != ERROR_NONE) {
-        return result;
+    code = INA_Init(ina, i2c_handle);
+    if (code != ERROR_NONE) {
+        return code;
     }
 
-    result.code = ConvHALError(
-        HAL_I2C_Mem_Read(i2c_handle, ina_addr, INA_CURRENT_REGISTER, 1, pData, 2, 100));
-    if (result.code != ERROR_NONE) {
-        return result;
+    code = ConvHALError(
+        HAL_I2C_Mem_Read(i2c_handle, ina->i2c_addr, INA_CURRENT_REGISTER, 1, cData, 2, 100));
+    if (code != ERROR_NONE) {
+        return code;
     }
 
-    int16_t raw = (int16_t)((pData[0] << 8) | pData[1]);
-    int32_t nanoamps = ((int32_t)raw * INA_CURRENT_MULTIPLIER_nA);
+    int16_t rawc = (int16_t)((cData[0] << 8) | cData[1]);
+    int32_t nanoamps = ((int32_t)rawc * INA_CURRENT_MULTIPLIER_nA);
 
-    result.whole = nanoamps / 1000000;
-    result.decimal = abs((nanoamps % 1000000) / 1000);
+    ina->current_w = nanoamps / 1000000;
+    ina->current_d = abs((nanoamps % 1000000) / 1000);
 
-    return result;
+    return ERROR_NONE;
 }

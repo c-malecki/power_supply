@@ -51,70 +51,70 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, BUCK_VAR_Pin|BUCK_12V_Pin|BUCK_6V5_Pin|NCA8_Pin
-                          |NCA9_Pin|NCA10_Pin|NCA11_Pin|NCA12_Pin
-                          |NCA15_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, NC_Pin|NCC14_Pin|NCC15_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, NC_Pin|NCB1_Pin|NC_BOOT_Pin|NCB10_Pin
-                          |NCB13_Pin|NCB14_Pin|NCB15_Pin|NCB3_Pin
-                          |GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, NCA0_Pin|GPIO_BUCK_VAR_Pin|GPIO_BUCK_12V_Pin|GPIO_BUCK_6V5_Pin
+                          |NCA7_Pin|NCA8_Pin|NCA9_Pin|NCA15_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : GPIO_BTN_3V3_Pin GPIO_BTN_5V_Pin GPIO_BTN_VAR_Pin */
-  GPIO_InitStruct.Pin = GPIO_BTN_3V3_Pin|GPIO_BTN_5V_Pin|GPIO_BTN_VAR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, NCB0_Pin|NCB1_Pin|NC_BOOT_Pin|NCB10_Pin
+                          |NCB3_Pin|NCB4_Pin|GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin
+                          |GPIO_MOSFET_VAR_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : NC_Pin NCC14_Pin NCC15_Pin */
+  GPIO_InitStruct.Pin = NC_Pin|NCC14_Pin|NCC15_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BUCK_VAR_Pin BUCK_12V_Pin BUCK_6V5_Pin */
-  GPIO_InitStruct.Pin = BUCK_VAR_Pin|BUCK_12V_Pin|BUCK_6V5_Pin;
+  /*Configure GPIO pins : NCA0_Pin NCA7_Pin NCA8_Pin NCA9_Pin
+                           NCA15_Pin */
+  GPIO_InitStruct.Pin = NCA0_Pin|NCA7_Pin|NCA8_Pin|NCA9_Pin
+                          |NCA15_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GPIO_BUCK_VAR_Pin GPIO_BUCK_12V_Pin GPIO_BUCK_6V5_Pin */
+  GPIO_InitStruct.Pin = GPIO_BUCK_VAR_Pin|GPIO_BUCK_12V_Pin|GPIO_BUCK_6V5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : GPIO_RTRY_SW_Pin GPIO_RTRY_CLK_Pin */
-  GPIO_InitStruct.Pin = GPIO_RTRY_SW_Pin|GPIO_RTRY_CLK_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : GPIO_RTRY_DT_Pin */
-  GPIO_InitStruct.Pin = GPIO_RTRY_DT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIO_RTRY_DT_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : NC_Pin NCB1_Pin NC_BOOT_Pin NCB10_Pin
-                           NCB13_Pin NCB14_Pin NCB15_Pin NCB3_Pin
-                           GPIO_MOSFET_3V3_Pin GPIO_MOSFET_5V_Pin GPIO_MOSFET_VAR_Pin */
-  GPIO_InitStruct.Pin = NC_Pin|NCB1_Pin|NC_BOOT_Pin|NCB10_Pin
-                          |NCB13_Pin|NCB14_Pin|NCB15_Pin|NCB3_Pin
-                          |GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin|GPIO_MOSFET_VAR_Pin;
+  /*Configure GPIO pins : NCB0_Pin NCB1_Pin NC_BOOT_Pin NCB10_Pin
+                           NCB3_Pin NCB4_Pin GPIO_MOSFET_3V3_Pin GPIO_MOSFET_5V_Pin
+                           GPIO_MOSFET_VAR_Pin */
+  GPIO_InitStruct.Pin = NCB0_Pin|NCB1_Pin|NC_BOOT_Pin|NCB10_Pin
+                          |NCB3_Pin|NCB4_Pin|GPIO_MOSFET_3V3_Pin|GPIO_MOSFET_5V_Pin
+                          |GPIO_MOSFET_VAR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : GPIO_BTN_MENU_Pin */
-  GPIO_InitStruct.Pin = GPIO_BTN_MENU_Pin;
+  /*Configure GPIO pins : GPIO_BTN_3V3_Pin GPIO_BTN_5V_Pin GPIO_BTN_VARV_Pin GPIO_BTN_DSP_Pin */
+  GPIO_InitStruct.Pin = GPIO_BTN_3V3_Pin|GPIO_BTN_5V_Pin|GPIO_BTN_VARV_Pin|GPIO_BTN_DSP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIO_BTN_MENU_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NCA8_Pin NCA9_Pin NCA10_Pin NCA11_Pin
-                           NCA12_Pin NCA15_Pin */
-  GPIO_InitStruct.Pin = NCA8_Pin|NCA9_Pin|NCA10_Pin|NCA11_Pin
-                          |NCA12_Pin|NCA15_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  /*Configure GPIO pins : GPIO_RTRY_SW_Pin GPIO_RTRY_DT_Pin */
+  GPIO_InitStruct.Pin = GPIO_RTRY_SW_Pin|GPIO_RTRY_DT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+  /*Configure GPIO pin : GPIO_RTRY_CLK_Pin */
+  GPIO_InitStruct.Pin = GPIO_RTRY_CLK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIO_RTRY_CLK_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 

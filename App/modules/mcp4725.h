@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "common.h"
 
-#define MCP_I2C_ADDRESS (0x60 << 1)
+#define MCP_I2C_ADDR (0x60 << 1)
 
 #define MCP_STEP_MIN 0 // 15V
 #define MCP_STEP_MAX 4095 // 6V
@@ -14,12 +14,12 @@
 
 typedef struct
 {
-    _Error_Codes code;
+    uint32_t i2c_addr;
     uint16_t steps;
-} MCP_Result_t;
+} MCP_t;
 
-MCP_Result_t MCP_VoltageToSteps(I2C_HandleTypeDef *handle, int32_t target_voltage_whole,
-                                uint32_t target_voltage_decimal);
-MCP_Result_t MCP_SetSteps(I2C_HandleTypeDef *handle, uint16_t steps);
+_Error_Codes MCP_VoltageToSteps(MCP_t *mcp, I2C_HandleTypeDef *handle, int32_t target_voltage_w,
+                                uint32_t target_voltage_d);
+_Error_Codes MCP_SetSteps(MCP_t *mcp, I2C_HandleTypeDef *handle, uint16_t steps);
 
 #endif

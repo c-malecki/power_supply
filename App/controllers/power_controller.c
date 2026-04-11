@@ -4,6 +4,7 @@
 
 #include "gpio.h"
 #include "main.h"
+#include "stm32f411xe.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 //
@@ -12,78 +13,118 @@
 #include "common.h"
 #include "power_controller.h"
 
-static const Power_Controller_Channel_t channel_3v3_default = { .output_pending = false,
-                                                                .output_enabled = false,
-                                                                .channel_type = CHANNEL_TYPE_FIXED,
-                                                                .mosfet_pin = GPIO_MOSFET_3V3_Pin,
-                                                                .mosfet_port =
-                                                                    GPIO_MOSFET_3V3_GPIO_Port,
-                                                                .target_voltage_whole = 3,
-                                                                .target_voltage_decimal = 3 };
+void Pwr_Chan_SetVarV(Pwr_Ctrl_t *ctrl, int32_t target_voltage_w, uint32_t target_voltage_d);
+void Power_Controller_UpdateVarValues(Pwr_Ctrl_t *ctrl);
 
-static const Power_Controller_Channel_t channel_5v_default = { .output_pending = false,
-                                                               .output_enabled = false,
-                                                               .channel_type = CHANNEL_TYPE_FIXED,
-                                                               .mosfet_pin = GPIO_MOSFET_5V_Pin,
-                                                               .mosfet_port =
-                                                                   GPIO_MOSFET_5V_GPIO_Port,
-                                                               .target_voltage_whole = 5,
-                                                               .target_voltage_decimal = 0 };
+static const Pwr_Chan_t channel_3v3_default = {
+    .toggle_pending = false,
+    .output_on = false,
+    .mosfet_pin = GPIO_MOSFET_3V3_Pin,
+    .mosfet_port = GPIO_MOSFET_3V3_GPIO_Port,
+};
 
-static const Power_Controller_Channel_t channel_var_default = { 
-    .output_pending         = false,
-    .output_enabled         = false,
-    .channel_type           = CHANNEL_TYPE_VARIABLE,
-    .mosfet_pin             = GPIO_MOSFET_VAR_Pin,
-    .target_voltage_whole   = VOLTAGE_VARIABLE_MIN_WHOLE,
-    .target_voltage_decimal = VOLTAGE_VARIABLE_MIN_DECIMAL,
-    .mosfet_port            = GPIO_MOSFET_VAR_GPIO_Port,
-    .variable               = {
-                      .adjustment_state    = {0},
-                      .cur_dac_steps       = 0,
-                      .cur_voltage_whole   = 0,
-                      .cur_voltage_decimal = 0,
-                      .cur_current_whole   = 0,
-                      .cur_current_decimal = 0,
-                      .pid =
-            {
-                              .p_gain     = 0.0f,
-                              .i_gain     = 0.0f,
-                              .acc_error  = 0.0f,
-                              .prev_error = 0.0f,
-                              .last_time  = 0,
-            },
-    }};
+static const Pwr_Chan_t channel_5v_default = {
+    .toggle_pending = false,
+    .output_on = false,
+    .mosfet_pin = GPIO_MOSFET_5V_Pin,
+    .mosfet_port = GPIO_MOSFET_5V_GPIO_Port,
+};
 
-void Power_Controller_PingMainINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+static const Pwr_Chan_t channel_var_default = {
+    .toggle_pending = false,
+    .output_on = false,
+    .mosfet_pin = GPIO_MOSFET_VAR_Pin,
+    .mosfet_port = GPIO_MOSFET_VAR_GPIO_Port,
+};
+
+static const Pwr_Var_Control_t var_ctrls_default = {
+    .pid_p_gain = 0.0f,
+    .pid_i_gain = 0.0f,
+    .pid_acc_error = 0.0f,
+    .pid_prev_error = 0.0f,
+    .target_voltage_w = VOLTAGE_VARIABLE_MIN_WHOLE,
+    .target_voltage_d = VOLTAGE_VARIABLE_MIN_DECIMAL,
+    .pid_last_time = 0,
+    .mcp = { .i2c_addr = MCP_I2C_ADDR, .steps = 0 }
+};
+
+static const Pwr_Buck_t buck_main_default = { .on = true,
+                                              .ina = {
+                                                  .i2c_addr = INA_I2C_ADDR_MAIN,
+                                                  .last_read = 0,
+                                                  .voltage_w = 0,
+                                                  .voltage_d = 0,
+                                                  .current_w = 0,
+                                                  .current_d = 0,
+                                              } };
+
+static const Pwr_Buck_t buck_6v5_default = { .on = false,
+                                             .gpio_pin = GPIO_BUCK_6V5_Pin,
+                                             .gpio_port = GPIO_BUCK_6V5_GPIO_Port,
+                                             .ina = {
+                                                 .i2c_addr = INA_I2C_ADDR_6V5,
+                                                 .last_read = 0,
+                                                 .voltage_w = 0,
+                                                 .voltage_d = 0,
+                                                 .current_w = 0,
+                                                 .current_d = 0,
+                                             } };
+
+static const Pwr_Buck_t buck_12v_default = { .on = false,
+                                             .gpio_pin = GPIO_BUCK_12V_Pin,
+                                             .gpio_port = GPIO_BUCK_12V_GPIO_Port,
+                                             .ina = {
+                                                 .i2c_addr = INA_I2C_ADDR_12V,
+                                                 .last_read = 0,
+                                                 .voltage_w = 0,
+                                                 .voltage_d = 0,
+                                                 .current_w = 0,
+                                                 .current_d = 0,
+                                             } };
+
+static const Pwr_Buck_t buck_var_default = { .on = false,
+                                             .gpio_pin = GPIO_BUCK_VAR_Pin,
+                                             .gpio_port = GPIO_BUCK_VAR_GPIO_Port,
+                                             .ina = {
+                                                 .i2c_addr = INA_I2C_ADDR_VAR,
+                                                 .last_read = 0,
+                                                 .voltage_w = 0,
+                                                 .voltage_d = 0,
+                                                 .current_w = 0,
+                                                 .current_d = 0,
+                                             } };
+
+void Pwr_Ctrl_Init(Pwr_Ctrl_t *ctrl, I2C_HandleTypeDef *i2c_handle)
 {
-    _Error_Codes code =
-        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_MAIN, 3, 100));
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_MAIN,
-                                    .code = code,
-                                    .function = FUNCTION_INA_PING });
-    }
+    ctrl->i2c_handle = i2c_handle;
+    ctrl->channels[PWR_CHAN_3V3] = channel_3v3_default;
+    ctrl->channels[PWR_CHAN_5V] = channel_5v_default;
+    ctrl->channels[PWR_CHAN_VARV] = channel_var_default;
+    ctrl->bucks[PWR_BUCK_MAIN] = buck_main_default;
+    ctrl->bucks[PWR_BUCK_6V5] = buck_6v5_default;
+    ctrl->bucks[PWR_BUCK_12V] = buck_12v_default;
+    ctrl->bucks[PWR_BUCK_VARV] = buck_var_default;
+    ctrl->var_ctrls = var_ctrls_default;
 }
 
-void Power_Controller_PingVarINA(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Pwr_Ctrl_Ping(Pwr_Ctrl_t *ctrl)
 {
-    _Error_Codes code =
-        ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, INA_I2C_ADDRESS_VAR, 3, 100));
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
-                                    .code = code,
-                                    .function = FUNCTION_INA_PING });
-    }
-}
+    _Error_Codes code;
+    // TODO: update functions enum
+    for (uint8_t i = 0; i < PWR_BUCK_COUNT; i++) {
+        Pwr_Buck_t buck = ctrl->bucks[i];
 
-void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
-{
-    _Error_Codes code = ConvHALError(HAL_I2C_IsDeviceReady(i2c_handle, MCP_I2C_ADDRESS, 3, 100));
+        code = ConvHALError(HAL_I2C_IsDeviceReady(ctrl->i2c_handle, buck.ina.i2c_addr, 3, 100));
+        if (code != ERROR_NONE) {
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_POWER,
+                                        .peripheral = PERIPHERAL_INA_MAIN,
+                                        .code = code,
+                                        .function = FUNCTION_INA_PING });
+        }
+    }
+
+    code = ConvHALError(HAL_I2C_IsDeviceReady(ctrl->i2c_handle, MCP_I2C_ADDR, 3, 100));
     if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
@@ -93,144 +134,82 @@ void Power_Controller_PingMCP(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_h
     }
 }
 
-void Power_Controller_Init(Power_Controller_t *ctrl, I2C_HandleTypeDef *i2c_handle)
+void Pwr_Ctrl_Run(Pwr_Ctrl_t *ctrl)
 {
-    ctrl->i2c_handle = i2c_handle;
-    ctrl->channels[POWER_CHANNEL_3V3] = channel_3v3_default;
-    ctrl->channels[POWER_CHANNEL_5V] = channel_5v_default;
-    ctrl->channels[POWER_CHANNEL_VARIABLE] = channel_var_default;
+    _Error_Codes code;
 
-    _Error_Codes code = INA_Init(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_MAIN,
-                                    .code = code,
-                                    .function = FUNCTION_INA_INIT });
-    }
+    for (uint8_t i = 0; i < PWR_BUCK_COUNT; i++) {
+        Pwr_Buck_t buck = ctrl->bucks[i];
 
-    code = INA_Init(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
-    if (code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
-                                    .code = code,
-                                    .function = FUNCTION_INA_INIT });
+        code = INA_Init(&buck.ina, ctrl->i2c_handle);
+        if (code != ERROR_NONE) {
+            ctrl->error_cb(ctrl->error_ctx,
+                           (_Error_t) { .controller = CONTROLLER_POWER,
+                                        .peripheral = PERIPHERAL_INA_MAIN,
+                                        .code = code,
+                                        .function = FUNCTION_INA_INIT });
+        }
     }
 }
 
-void Power_Controller_UpdateMainValues(Power_Controller_t *ctrl)
+void Pwr_Buck_Toggle(Pwr_Ctrl_t *ctrl, Pwr_Buck buck)
 {
-    INA_Result_t result = INA_Read_Voltage(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
-    if (result.code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_MAIN,
-                                    .code = result.code,
-                                    .function = FUNCTION_INA_READ_V });
-    }
-    ctrl->main_voltage_whole = result.whole;
-    ctrl->main_voltage_decimal = result.decimal;
-
-    result = INA_Read_Current(INA_I2C_ADDRESS_MAIN, ctrl->i2c_handle);
-    if (result.code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_MAIN,
-                                    .code = result.code,
-                                    .function = FUNCTION_INA_READ_I });
-    }
-    ctrl->main_current_whole = result.whole;
-    ctrl->main_current_decimal = result.decimal;
+    Pwr_Buck_t *b = &ctrl->bucks[buck];
+    bool new_state = !b->on;
+    HAL_GPIO_WritePin(b->gpio_port, b->gpio_pin, new_state);
+    b->on = new_state;
 }
 
-void Power_Controller_SetVoltage(Power_Controller_t *ctrl, int32_t target_voltage_whole,
-                                 uint32_t target_voltage_decimal)
+void Pwr_Chan_Toggle(Pwr_Ctrl_t *ctrl, Pwr_Chan channel)
 {
-    Power_Controller_Channel_t *chan = &ctrl->channels[POWER_CHANNEL_VARIABLE];
+    Pwr_Chan_t *chan = &ctrl->channels[channel];
+    uint8_t new_state = !chan->output_on;
 
-    if (target_voltage_whole < VOLTAGE_VARIABLE_MIN_WHOLE) {
-        target_voltage_whole = VOLTAGE_VARIABLE_MIN_WHOLE;
-        target_voltage_decimal = 0;
+    HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, new_state);
+
+    if (channel == PWR_CHAN_VARV) {
+        ctrl->var_ctrls.pid_p_gain = 50.0f;
+        ctrl->var_ctrls.pid_i_gain = 5.0f;
+        ctrl->var_ctrls.pid_acc_error = 0.0f;
+        ctrl->var_ctrls.pid_prev_error = 0.0f;
+        ctrl->var_ctrls.pid_last_time = HAL_GetTick();
+        // TODO: start pid
+        if (!chan->output_on) {
+            Pwr_Chan_SetVarV(ctrl, VOLTAGE_VARIABLE_MIN_WHOLE, VOLTAGE_VARIABLE_MIN_DECIMAL);
+        } else {
+            Pwr_Chan_SetVarV(ctrl, ctrl->var_ctrls.target_voltage_w,
+                             ctrl->var_ctrls.target_voltage_d);
+        }
     }
 
-    if (target_voltage_whole > VOLTAGE_VARIABLE_MAX_WHOLE) {
-        target_voltage_whole = VOLTAGE_VARIABLE_MAX_WHOLE;
-        target_voltage_decimal = 0;
+    chan->toggle_pending = false;
+    chan->output_on = new_state;
+}
+
+void Pwr_Chan_SetVarV(Pwr_Ctrl_t *ctrl, int32_t target_voltage_w, uint32_t target_voltage_d)
+{
+    if (target_voltage_w < VOLTAGE_VARIABLE_MIN_WHOLE) {
+        target_voltage_w = VOLTAGE_VARIABLE_MIN_WHOLE;
+        target_voltage_d = 0;
     }
 
-    MCP_Result_t result =
-        MCP_VoltageToSteps(ctrl->i2c_handle, target_voltage_whole, target_voltage_decimal);
-    if (result.code != ERROR_NONE) {
+    if (target_voltage_w > VOLTAGE_VARIABLE_MAX_WHOLE) {
+        target_voltage_w = VOLTAGE_VARIABLE_MAX_WHOLE;
+        target_voltage_d = 0;
+    }
+
+    _Error_Codes code = MCP_VoltageToSteps(&ctrl->var_ctrls.mcp, ctrl->i2c_handle, target_voltage_w,
+                                           target_voltage_d);
+    if (code != ERROR_NONE) {
         ctrl->error_cb(ctrl->error_ctx,
                        (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
-                                    .code = result.code,
+                                    .peripheral = PERIPHERAL_MCP,
+                                    .code = code,
                                     .function = FUNCTION_MCP_V_TO_S });
     }
 
-    chan->target_voltage_whole = target_voltage_whole;
-    chan->target_voltage_decimal = target_voltage_decimal;
-    chan->variable.cur_dac_steps = result.steps;
-
-    // TODO: need a software interrupt or someway to set a timer to call updatevarvalues
-    // chan->variable.adjustment_state.state = SETTLING;
-    // HAL_Delay(350);
-
-    // Power_Controller_UpdateVarValues(ctrl);
-}
-
-void Power_Controller_UpdateVarValues(Power_Controller_t *ctrl)
-{
-    Power_Controller_Channel_t *chan = &ctrl->channels[POWER_CHANNEL_VARIABLE];
-
-    INA_Result_t result = INA_Read_Voltage(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
-    if (result.code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
-                                    .code = result.code,
-                                    .function = FUNCTION_INA_READ_V });
-    }
-    chan->variable.cur_voltage_whole = result.whole;
-    chan->variable.cur_voltage_decimal = result.decimal;
-
-    result = INA_Read_Current(INA_I2C_ADDRESS_VAR, ctrl->i2c_handle);
-    if (result.code != ERROR_NONE) {
-        ctrl->error_cb(ctrl->error_ctx,
-                       (_Error_t) { .controller = CONTROLLER_POWER,
-                                    .peripheral = PERIPHERAL_INA_VAR,
-                                    .code = result.code,
-                                    .function = FUNCTION_INA_READ_I });
-    }
-    chan->variable.cur_current_whole = result.whole;
-    chan->variable.cur_current_decimal = result.decimal;
-}
-
-void Power_Controller_ToggleOut(Power_Controller_t *ctrl, Power_Channels channel)
-{
-    Power_Controller_Channel_t *chan = &ctrl->channels[channel];
-
-    HAL_GPIO_WritePin(chan->mosfet_port, chan->mosfet_pin, chan->output_enabled);
-
-    if (chan->channel_type == CHANNEL_TYPE_VARIABLE) {
-        chan->variable.pid.p_gain = 50.0f;
-        chan->variable.pid.i_gain = 5.0f;
-        chan->variable.pid.acc_error = 0.0f;
-        chan->variable.pid.prev_error = 0.0f;
-        chan->variable.pid.last_time = HAL_GetTick();
-        // TODO: start pid
-        if (!chan->output_enabled) {
-            Power_Controller_SetVoltage(ctrl, VOLTAGE_VARIABLE_MIN_WHOLE,
-                                        VOLTAGE_VARIABLE_MIN_DECIMAL);
-        } else {
-            Power_Controller_SetVoltage(ctrl, chan->target_voltage_whole,
-                                        chan->target_voltage_decimal);
-        }
-        Power_Controller_UpdateVarValues(ctrl);
-    }
-
-    chan->output_pending = false;
+    ctrl->var_ctrls.target_voltage_w = target_voltage_w;
+    ctrl->var_ctrls.target_voltage_d = target_voltage_d;
 }
 
 // static uint8_t var_pi_start(Channel_VAR_t *chan, I2C_HandleTypeDef *i2c_handle);
@@ -255,16 +234,16 @@ Consider deadband to prevent oscillation:
 //     float error = chan->target_voltage - chan->cur_voltage;
 
 //     uint32_t current_time = HAL_GetTick();
-//     float delta_time = (current_time - chan->pid.last_time) / 1000.0f;
+//     float delta_time = (current_time - chan->pid.pid_last_time) / 1000.0f;
 
 //     if (delta_time > 1.0f) {
-//         chan->pid.last_time = current_time;
+//         chan->pid.pid_last_time = current_time;
 //         return ERROR_NONE;
 //     }
 
-//     chan->pid.last_time = current_time;
+//     chan->pid.pid_last_time = current_time;
 
-//     float proportion = chan->pid.p_gain * error;
+//     float proportion = chan->pid.pid_p_gain * error;
 //     chan->pid.acc_err += error * delta_time;
 
 //     if (chan->pid.acc_err > 500.0f) {
@@ -274,7 +253,7 @@ Consider deadband to prevent oscillation:
 //         chan->pid.acc_err = -500.0f;
 //     }
 
-//     float integral = chan->pid.i_gain * chan->pid.acc_err;
+//     float integral = chan->pid.pid_i_gain * chan->pid.acc_err;
 //     float step_adjustment = proportion + integral;
 
 //     int16_t adjustment = (int16_t)step_adjustment;

@@ -106,17 +106,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C1_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
+  MX_I2C1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
     SEGGER_RTT_Init();
 
-    app.state = APP_STATE_PRE_INIT;
+    app.state = APP_STATE_INIT;
     App_Init(&app, &hi2c1);
 
-    Test_Display(&app);
+    // Test_Power(&app);
+    // Test_Temperature(&app);
+    // Test_Display(&app);
 
   /* USER CODE END 2 */
 
@@ -127,18 +130,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-        // if (app.power_controller.channels[POWER_CHANNEL_3V3].output_pending == true) {
-        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_3V3);
-        // }
-        // if (app.power_controller.channels[POWER_CHANNEL_5V].output_pending == true) {
-        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_5V);
-        // }
-        // if (app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_pending == true) {
-        //     Power_Controller_ToggleOut(&app.power_controller, POWER_CHANNEL_VARIABLE);
-        // }
-
-        // Power_Controller_UpdateVarValues(&app.power_controller);
 
         // App_Run(&app);
     }
@@ -194,25 +185,26 @@ void SystemClock_Config(void)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     // TODO: issue #28: set flag and handle logic outside of interrupt
-    Temperature_Controller_t *ctrl = &app.temperature_controller;
+    Temp_Ctrl_t *ctrl = &app.temperature_controller;
     if (htim->Instance == TIM5 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-        ctrl->fan_cur = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-        ctrl->last_tick = HAL_GetTick();
+        ctrl->fan.value_cur = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+        ctrl->fan.last_tick = HAL_GetTick();
 
-        if (!ctrl->fan_first) {
-            if (ctrl->fan_cur >= ctrl->fan_last) {
-                ctrl->fan_diff = ctrl->fan_cur - ctrl->fan_last;
+        if (!ctrl->fan.first_cb) {
+            if (ctrl->fan.value_cur >= ctrl->fan.value_last) {
+                ctrl->fan.value_diff = ctrl->fan.value_cur - ctrl->fan.value_last;
             } else {
-                ctrl->fan_diff = (0xFFFFFFFF - ctrl->fan_last) + ctrl->fan_cur + 1;
+                ctrl->fan.value_diff =
+                    (0xFFFFFFFF - ctrl->fan.value_last) + ctrl->fan.value_cur + 1;
             }
 
-            if (ctrl->fan_diff > 0) {
-                ctrl->fan_rpm = 30000000.0f / (float)ctrl->fan_diff;
+            if (ctrl->fan.value_diff > 0) {
+                ctrl->fan.rpm = 30000000.0f / (float)ctrl->fan.value_diff;
             }
         }
 
-        ctrl->fan_last = ctrl->fan_cur;
-        ctrl->fan_first = 0;
+        ctrl->fan.value_last = ctrl->fan.value_cur;
+        ctrl->fan.first_cb = 0;
     }
 }
 
@@ -233,50 +225,47 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     switch (GPIO_Pin) {
 
-    case GPIO_BTN_VAR_Pin:
+    case GPIO_BTN_VARV_Pin:
     {
         // TODO: issue #30: adjust debounce time to get buttons to stable toggle
-        if (now - last_press_var < 75)
+        if (now - last_press_var < 75) {
             return;
+        }
         last_press_var = now;
-        bool enabled = !app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_enabled;
-        app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_enabled = enabled;
-        app.power_controller.channels[POWER_CHANNEL_VARIABLE].output_pending = true;
-        printf("GPIO_BTN_VAR: %u\r\n\n", enabled);
+        app.power_controller.channels[PWR_CHAN_VARV].toggle_pending = true;
+        printf("GPIO_BTN_VAR\r\n\n");
         break;
     }
 
     case GPIO_BTN_5V_Pin:
     {
-        if (now - last_press_5v < 75)
+        if (now - last_press_5v < 75) {
             return;
+        }
         last_press_5v = now;
-        bool enabled = !app.power_controller.channels[POWER_CHANNEL_5V].output_enabled;
-        app.power_controller.channels[POWER_CHANNEL_5V].output_enabled = enabled;
-        app.power_controller.channels[POWER_CHANNEL_5V].output_pending = true;
-        printf("GPIO_BTN_5V: %u\r\n\n", enabled);
+        app.power_controller.channels[PWR_CHAN_5V].toggle_pending = true;
+        printf("GPIO_BTN_5V\r\n\n");
         break;
     }
 
     case GPIO_BTN_3V3_Pin:
     {
-        if (now - last_press_3v3 < 75)
+        if (now - last_press_3v3 < 75) {
             return;
+        }
         last_press_3v3 = now;
-        bool enabled = !app.power_controller.channels[POWER_CHANNEL_3V3].output_enabled;
-        app.power_controller.channels[POWER_CHANNEL_3V3].output_enabled = enabled;
-        app.power_controller.channels[POWER_CHANNEL_3V3].output_pending = true;
-        printf("GPIO_BTN_3V3: %u\r\n\n", enabled);
+        app.power_controller.channels[PWR_CHAN_3V3].toggle_pending = true;
+        printf("GPIO_BTN_3V3\r\n\n");
         break;
     }
 
-    case GPIO_BTN_MENU_Pin:
+    case GPIO_BTN_DSP_Pin:
     {
-        if (now - last_press_menu < 75)
+        if (now - last_press_menu < 75) {
             return;
+        }
         last_press_menu = now;
-        bool enabled = !app.power_controller.channels[POWER_CHANNEL_3V3].output_enabled;
-        printf("GPIO_BTN_MENU: %u\r\n\n", enabled);
+        printf("GPIO_BTN_DSP\r\n\n");
         break;
     }
 
@@ -299,26 +288,37 @@ void I2C_ResetBus(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
-    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
     for (int i = 0; i < 9; i++) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-        HAL_Delay(1);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-        HAL_Delay(1);
+        HAL_Delay(5); // Slow toggle (approx 100kHz)
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+        HAL_Delay(5);
     }
 
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-    HAL_Delay(1);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
 
-    HAL_I2C_DeInit(&hi2c1);
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    HAL_Delay(5);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // SCL High
+    HAL_Delay(5);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET); // SDA High (STOP condition)
+    HAL_Delay(5);
 }
 /* USER CODE END 4 */
 

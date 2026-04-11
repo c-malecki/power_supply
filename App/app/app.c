@@ -15,11 +15,16 @@
 #include "common.h"
 
 const char *_App_State_Lookup[] = {
-    "Pre-Init",          "Init Controllers", "Test Controllers", "Start Master",
-    "Check Temperature", "Check Power",      "Check Display",
+    "Init",
+    "Check Power",
+    "Check Temperature",
+    "Check Display",
 };
 
-void init_controllers(App_t *app);
+void init_controllers(App_t *app, I2C_HandleTypeDef *i2c_handle);
+void ping_peripherals(App_t *app);
+void power_bucks(App_t *app);
+void run_controllers(App_t *app);
 void test_controllers(App_t *app);
 void check_temp(App_t *app);
 void check_power(App_t *app);
@@ -69,8 +74,6 @@ void error_callback(void *ctx, _Error_t error)
 
 void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
 {
-    app->i2c_handle = i2c_handle;
-
     app->display_controller.error_cb = error_callback;
     app->display_controller.error_ctx = app;
 
@@ -86,47 +89,18 @@ void App_Init(App_t *app, I2C_HandleTypeDef *i2c_handle)
     app->temperature_controller.error_cb = error_callback;
     app->temperature_controller.error_ctx = app;
 
-    app->state = APP_STATE_INIT_CONTROLLERS;
-    init_controllers(app);
-
-    // app->state = APP_STATE_TEST_CONTROLLERS;
-    // test_controllers(app);
-
-    // LED_Controller_SetLED(&app->led_controller, LED_STATUS, LED_COLOR_GREEN);
-
-    app->state = APP_STATE_START_MASTER;
-}
-
-void init_controllers(App_t *app)
-{
-    Power_Controller_PingMainINA(&app->power_controller, app->i2c_handle);
-    Power_Controller_PingMCP(&app->power_controller, app->i2c_handle);
-    Temperature_Controller_PingSHT(&app->temperature_controller, app->i2c_handle);
-    Display_Controller_PingGME(&app->display_controller, app->i2c_handle);
-
-    // if all peripherals respond, switch relay to enable power from other bucks to
-    // output channels
-    HAL_GPIO_WritePin(GPIO_RELAY_S_GPIO_Port, GPIO_RELAY_S_Pin, GPIO_PIN_SET);
-    HAL_Delay(100);
-
-    Power_Controller_Init(&app->power_controller, app->i2c_handle);
-    Temperature_Controller_Init(&app->temperature_controller, app->i2c_handle);
-    Display_Controller_Init(&app->display_controller, app->i2c_handle);
-}
-
-void test_controllers(App_t *app)
-{
-    // test display, power, temperature, status controllers
+    init_controllers(app, i2c_handle);
+    ping_peripherals(app);
+    power_bucks(app);
+    run_controllers(app);
+    test_controllers(app);
 }
 
 void App_Run(App_t *app)
 {
     switch (app->state) {
 
-    case APP_STATE_PRE_INIT:
-    case APP_STATE_INIT_CONTROLLERS:
-    case APP_STATE_TEST_CONTROLLERS:
-    case APP_STATE_START_MASTER:
+    case APP_STATE_INIT:
         break;
 
     case APP_STATE_CHECK_TEMPERATURE:
@@ -143,6 +117,86 @@ void App_Run(App_t *app)
     }
 }
 
-void check_temp(App_t *app) { }
+void init_controllers(App_t *app, I2C_HandleTypeDef *i2c_handle)
+{
+    Pwr_Ctrl_Init(&app->power_controller, i2c_handle);
+    Temp_Ctrl_Init(&app->temperature_controller, i2c_handle);
+    Dsp_Ctrl_Init(&app->display_controller, i2c_handle);
+}
 
-void check_power(App_t *app) { }
+void ping_peripherals(App_t *app)
+{
+    Pwr_Ctrl_Ping(&app->power_controller);
+    Temp_Ctrl_Ping(&app->temperature_controller);
+    Dsp_Ctrl_Ping(&app->display_controller);
+}
+
+void power_bucks(App_t *app)
+{
+    Pwr_Buck_Toggle(&app->power_controller, PWR_BUCK_6V5);
+    Pwr_Buck_Toggle(&app->power_controller, PWR_BUCK_12V);
+    Pwr_Buck_Toggle(&app->power_controller, PWR_BUCK_VARV);
+    HAL_Delay(100);
+}
+
+void run_controllers(App_t *app)
+{
+    Pwr_Ctrl_Run(&app->power_controller);
+    Temp_Ctrl_Run(&app->temperature_controller);
+    Dsp_Ctrl_Run(&app->display_controller);
+}
+
+void test_controllers(App_t *app)
+{
+    // test display, power, temperature, status controllers
+}
+
+void check_power(App_t *app)
+{
+    for (uint8_t i = 0; i < PWR_CHAN_COUNT; i++) {
+        Pwr_Chan_t *chan = &app->power_controller.channels[i];
+        Pwr_Chan idx = (Pwr_Chan)i;
+
+        if (chan->toggle_pending == true) {
+            Pwr_Chan_Toggle(&app->power_controller, idx);
+        }
+    }
+
+    for (uint32_t i = 0; i < PWR_BUCK_COUNT; i++) {
+        Pwr_Buck_t *buck = &app->power_controller.bucks[i];
+
+        if ((HAL_GetTick() - buck->ina.last_read) >= INA_READ_INTERVAL) {
+            INA_Read(&buck->ina, app->power_controller.i2c_handle);
+        }
+    }
+}
+
+void check_temp(App_t *app)
+{
+    for (uint8_t i = 0; i < TEMP_SENSOR_COUNT; i++) {
+        Temp_Sensor idx = (Temp_Sensor)i;
+        Temp_Sensor_t *sensor = &app->temperature_controller.sensors[idx];
+
+        switch (sensor->state) {
+        case TEMP_SENSOR_STATE_INIT:
+        case TEMP_SENSOR_STATE_START_READ:
+            break;
+
+        case TEMP_SENSOR_STATE_READY:
+            Temp_Sensor_StartRead(&app->temperature_controller, idx);
+            break;
+
+        case TEMP_SENSOR_STATE_WAIT_RESULT:
+            Temp_Sensor_CheckResult(&app->temperature_controller, idx);
+            break;
+
+        case TEMP_SENSOR_STATE_GET_RESULT:
+            Temp_Sensor_GetResult(&app->temperature_controller, idx);
+            break;
+
+        case TEMP_SENSOR_STATE_WAIT_READ:
+            Temp_Sensor_CheckReady(&app->temperature_controller, idx);
+            break;
+        }
+    }
+}

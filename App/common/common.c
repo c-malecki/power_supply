@@ -10,9 +10,9 @@ const char *_Controller_Lookup[] = {
     "LED Controller", "Power Controller",   "Temperature Controller",
 };
 
-const char *_Peripheral_Lookup[] = {
-    "Not Specified", "MCP4725", "INA219 Main", "INA219 Var", "GME12864-13", "SHT31",
-};
+const char *_Peripheral_Lookup[] = { "Not Specified", "MCP4725",        "INA219 Main", "INA219 Var",
+                                     "GME12864-13",   "SHT31 Var Buck", "Fan",         "INA219 6V5",
+                                     "INA219 12V",    "SHT31 MOSFET" };
 
 const char *_Function_Lookup[] = { "Not Specified",    "INA Ping",         "MCP Ping",
                                    "GME Ping",         "SHT Ping",         "INA Init",
